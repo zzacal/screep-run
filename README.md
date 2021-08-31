@@ -1,2 +1,0 @@
-# screep-run
-Automate screep
