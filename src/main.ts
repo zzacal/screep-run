@@ -33,12 +33,19 @@ const spawnManager = new SpawnManager(Game);
 const screepManager = new CreepManager(Memory, Game, spawnManager);
 
 export const loop = ErrorMapper.wrapLoop(() => {
-  console.log(`Current game tick is ${Game.time}`);
+  // console.log(`Current game tick is ${Game.time}`);
   // Automatically delete memory of missing creeps
   screepManager.cleanup();
 
   for (let i in Game.rooms) {
-    screepManager.maintain(Game.rooms[i], 1, 2, 1);
+    // getStrategy(room: Room) => {
+    //   buildings: [STRUCTURE, STRUCTURE, STRUCTURE, STRUCTURE]
+    //   builders: #,
+    //   harvesters: #,
+    //   upgrade: #
+    // }: Strategy
+
+    screepManager.maintain(Game.rooms[i], 2, 3, 2);
   }
 
   screepManager.work();

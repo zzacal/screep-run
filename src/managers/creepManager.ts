@@ -45,8 +45,10 @@ export class CreepManager {
           break;
         case CreepRole.harverster:
           hCount++;
+          break;
         case CreepRole.upgrader:
           uCount++
+          break;
         default:
           break;
       }
