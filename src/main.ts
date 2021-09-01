@@ -1,5 +1,4 @@
-import { ScreepManager } from "managers/screepManager";
-import { SpawnManager } from "managers/spawnManager";
+import { CreepManager, SpawnManager } from "managers";
 import { ErrorMapper } from "utils/ErrorMapper";
 
 declare global {
@@ -31,10 +30,16 @@ declare global {
   }
 }
 const spawnManager = new SpawnManager(Game);
-const screepManager = new ScreepManager(Memory, Game, spawnManager);
+const screepManager = new CreepManager(Memory, Game, spawnManager);
 
 export const loop = ErrorMapper.wrapLoop(() => {
   console.log(`Current game tick is ${Game.time}`);
   // Automatically delete memory of missing creeps
   screepManager.cleanup();
+
+  for (let i in Game.rooms) {
+    screepManager.maintain(Game.rooms[i], 1, 2, 1);
+  }
+
+  screepManager.work();
 });
