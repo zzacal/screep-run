@@ -1,20 +1,18 @@
 export class SpawnManager {
-  constructor(private game: Game) {
-
-  }
+  constructor() {}
 
   public getSpawns = (): Array<StructureSpawn> => {
-    let results = [];
-    for (const i in this.game.spawns) {
-      results.push(this.game.spawns[i]);
+    const results = [];
+    for (const i in Game.spawns) {
+      results.push(Game.spawns[i]);
     }
     return results;
   }
 
   public getSpawn = (filter: (spawns: StructureSpawn) => boolean): StructureSpawn | null => {
-    for(const i in this.game.spawns) {
-      const current = this.game.spawns[i];
-      if(filter(current)) {
+    for (const i in Game.spawns) {
+      const current = Game.spawns[i];
+      if (filter(current)) {
         return current;
       }
     }

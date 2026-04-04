@@ -1,23 +1,35 @@
+import { findAssignedSource, findReachableSource, moveToTarget } from "work/utils";
+
 export const harvest = (creep: Creep) => {
-  if(creep.store.getFreeCapacity() > 0) {
-        var sources = creep.room.find(FIND_SOURCES);
-        if(creep.harvest(sources[0]) == ERR_NOT_IN_RANGE) {
-            creep.moveTo(sources[0], {visualizePathStyle: {stroke: '#ffaa00'}});
-        }
+    const source = findAssignedSource(creep) ?? findReachableSource(creep);
+    if (!source) {
+        return;
     }
-    else {
-        var targets = creep.room.find(FIND_STRUCTURES, {
-                filter: (structure) => {
-                    return (structure.structureType == STRUCTURE_EXTENSION ||
-                            structure.structureType == STRUCTURE_SPAWN ||
-                            structure.structureType == STRUCTURE_TOWER) && 
-                            structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0;
-                }
-        });
-        if(targets.length > 0) {
-            if(creep.transfer(targets[0], RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-                creep.moveTo(targets[0], {visualizePathStyle: {stroke: '#ffffff'}});
-            }
-        }
+
+    if (!creep.pos.isNearTo(source)) {
+        moveToTarget(creep, source, "#ffaa00");
+        return;
+    }
+
+    const result = creep.harvest(source);
+    if (result === ERR_NOT_ENOUGH_RESOURCES) {
+        return;
+    }
+
+    const sourceContainer = source.pos.findInRange(FIND_STRUCTURES, 1, {
+        filter: (structure) => structure.structureType === STRUCTURE_CONTAINER,
+    })[0] as StructureContainer | undefined;
+
+    if (
+        sourceContainer &&
+        creep.store.getUsedCapacity(RESOURCE_ENERGY) > 0 &&
+        creep.pos.isNearTo(sourceContainer)
+    ) {
+        creep.transfer(sourceContainer, RESOURCE_ENERGY);
+        return;
+    }
+
+    if (creep.store.getFreeCapacity() === 0) {
+        creep.drop(RESOURCE_ENERGY);
     }
 }
