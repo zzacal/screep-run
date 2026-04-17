@@ -193,7 +193,7 @@ const logRoomTuning = (room: Room, needs: RoomNeeds, signals: ReturnType<typeof 
       `sources=${signals.sourceCount}`,
       `drop=${signals.sourceDropEnergy}`,
       `fill=${signals.extensionFillRatio.toFixed(2)}`,
-      `needs=harvest:${needs.harvest.toFixed(2)},haul:${needs.haul.toFixed(2)},build:${needs.build.toFixed(2)},upgrade:${needs.upgrade.toFixed(2)},defend:${needs.defend.toFixed(2)}`,
+      `needs=harvest:${needs.harvest.toFixed(2)},haul:${needs.haul.toFixed(2)},build:${needs.build.toFixed(2)},upgrade:${needs.upgrade.toFixed(2)},repair:${needs.repair.toFixed(2)},defend:${needs.defend.toFixed(2)}`,
     ].join(" ")
   );
 };

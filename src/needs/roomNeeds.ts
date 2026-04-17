@@ -8,6 +8,7 @@ export interface RoomSignals {
   idleSpawnCount: number;
   isThreatened: boolean;
   remoteEnabled: boolean;
+  repairUrgency: number;
 }
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
@@ -44,6 +45,14 @@ export const computeRoomSignals = (room: Room, isThreatened: boolean, remoteEnab
     filter: (spawn) => spawn.spawning == null,
   }).length;
 
+  const damagedStructures = room.find(FIND_STRUCTURES, {
+    filter: (s) =>
+      s.structureType !== STRUCTURE_WALL &&
+      s.structureType !== STRUCTURE_RAMPART &&
+      s.hits < s.hitsMax * 0.75,
+  });
+  const repairUrgency = clamp01(damagedStructures.length / 5);
+
   return {
     sourceCount,
     hasConstruction,
@@ -52,11 +61,12 @@ export const computeRoomSignals = (room: Room, isThreatened: boolean, remoteEnab
     idleSpawnCount,
     isThreatened,
     remoteEnabled,
+    repairUrgency,
   };
 };
 
 export const computeRoomNeeds = (signals: RoomSignals): RoomNeeds => {
-  const { extensionFillRatio, sourceDropEnergy, hasConstruction, isThreatened, remoteEnabled } = signals;
+  const { extensionFillRatio, sourceDropEnergy, hasConstruction, isThreatened, remoteEnabled, repairUrgency } = signals;
 
   const harvest = clamp01(0.4 + (1 - extensionFillRatio) * 0.3);
 
@@ -69,6 +79,7 @@ export const computeRoomNeeds = (signals: RoomSignals): RoomNeeds => {
   const defend = isThreatened ? 1.0 : 0.0;
   const remoteHarvest = remoteEnabled ? 0.5 : 0.0;
   const remoteHaul = remoteEnabled ? 0.5 : 0.0;
+  const repair = repairUrgency > 0 ? clamp01(0.4 + repairUrgency * 0.5) : 0.0;
 
-  return makeRoomNeeds({ harvest, haul, build, upgrade, defend, remoteHarvest, remoteHaul });
+  return makeRoomNeeds({ harvest, haul, build, upgrade, defend, remoteHarvest, remoteHaul, repair });
 };

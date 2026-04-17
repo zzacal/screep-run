@@ -10,6 +10,7 @@ export const buildBodyForTask = (task: TaskName, energyCapacity: number): BodyPa
     case "build":
     case "upgrade":       return buildWorkerBody(energyCapacity);
     case "defend":        return buildDefenderBody(energyCapacity);
+    case "repair":        return buildWorkerBody(energyCapacity);
     case "remoteHarvest": return buildRemoteHarvesterBody(energyCapacity);
     case "remoteHaul":    return buildRemoteHaulerBody(energyCapacity);
     default: {

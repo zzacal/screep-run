@@ -25,7 +25,7 @@ export const selectTask = (creep: Creep, needs: RoomNeeds): TaskName => {
       continue;
     }
 
-    if ((task === "harvest" || task === "build" || task === "upgrade" || task === "remoteHarvest") && !hasWork) {
+    if ((task === "harvest" || task === "build" || task === "upgrade" || task === "remoteHarvest" || task === "repair") && !hasWork) {
       continue;
     }
 

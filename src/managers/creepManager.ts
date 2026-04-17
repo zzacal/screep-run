@@ -13,6 +13,7 @@ import {
   haul,
   remoteHaul,
   remoteHarvest,
+  repair,
   upgrade,
 } from "work";
 
@@ -24,6 +25,7 @@ const TASK_DISPATCH: Record<TaskName, (creep: Creep) => void> = {
   defend,
   remoteHarvest,
   remoteHaul,
+  repair,
 };
 
 export class CreepManager {

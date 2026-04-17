@@ -10,5 +10,6 @@ export const makeRoomNeeds = (overrides: Partial<RoomNeeds>): RoomNeeds => ({
   defend: 0,
   remoteHarvest: 0,
   remoteHaul: 0,
+  repair: 0,
   ...overrides,
 });
