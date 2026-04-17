@@ -71,7 +71,7 @@ const getDeliveryTarget = (creep: Creep) => {
   if (creep.room.find(FIND_CONSTRUCTION_SITES).length > 0) {
     const builders = creep.room.find(FIND_MY_CREEPS, {
       filter: (worker) =>
-        worker.memory.role === CreepRole.builder &&
+        (worker.memory.currentTask === "build" || worker.memory.role === CreepRole.builder) &&
         worker.store.getFreeCapacity(RESOURCE_ENERGY) > 0,
     });
     const builderTarget = creep.pos.findClosestByPath(builders);

@@ -91,9 +91,15 @@ export const build = (creep: Creep) => {
 
     if (creep.memory.working) {
         const target = getBuildTarget(creep);
-        if (target && creep.build(target) == ERR_NOT_IN_RANGE) {
-            moveToTarget(creep, target, "#ffffff");
-        }
+        if (target) {
+      const result = creep.build(target);
+      if (result === ERR_NOT_IN_RANGE) {
+        moveToTarget(creep, target, "#ffffff");
+      } else if (result === ERR_NO_BODYPART) {
+        creep.memory.working = false;
+        creep.drop(RESOURCE_ENERGY);
+      }
+    }
     } else {
         const pickupTarget = getBuilderPickupTarget(creep);
         if (pickupTarget instanceof Resource) {

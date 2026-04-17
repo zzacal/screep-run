@@ -80,7 +80,7 @@ export const remoteHarvest = (creep: Creep) => {
   if (creep.store.getUsedCapacity(RESOURCE_ENERGY) > 0) {
     const adjacentHauler = creep.pos.findInRange(FIND_MY_CREEPS, 1, {
       filter: (worker) =>
-        worker.memory.role === CreepRole.remoteHauler &&
+        (worker.memory.currentTask === "remoteHaul" || worker.memory.role === CreepRole.remoteHauler) &&
         worker.store.getFreeCapacity(RESOURCE_ENERGY) > 0,
     })[0];
 

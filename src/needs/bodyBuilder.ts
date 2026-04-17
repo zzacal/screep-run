@@ -1,0 +1,58 @@
+import { TaskName } from "types/taskName";
+
+export const bodyCost = (body: BodyPartConstant[]): number =>
+  body.reduce((sum, part) => sum + BODYPART_COST[part], 0);
+
+export const buildBodyForTask = (task: TaskName, energyCapacity: number): BodyPartConstant[] => {
+  switch (task) {
+    case "harvest":       return buildHarvesterBody(energyCapacity);
+    case "haul":          return buildHaulerBody(energyCapacity);
+    case "build":
+    case "upgrade":       return buildWorkerBody(energyCapacity);
+    case "defend":        return buildDefenderBody(energyCapacity);
+    case "remoteHarvest": return buildRemoteHarvesterBody(energyCapacity);
+    case "remoteHaul":    return buildRemoteHaulerBody(energyCapacity);
+    default: {
+      const _exhaustive: never = task;
+      return [WORK, CARRY, MOVE];
+    }
+  }
+};
+
+const buildHarvesterBody = (cap: number): BodyPartConstant[] => {
+  if (cap >= 550) return [WORK, WORK, WORK, CARRY, MOVE, MOVE, MOVE];
+  if (cap >= 400) return [WORK, WORK, CARRY, MOVE, MOVE];
+  if (cap >= 300) return [WORK, WORK, CARRY, MOVE];
+  return [WORK, CARRY, MOVE];
+};
+
+const buildHaulerBody = (cap: number): BodyPartConstant[] => {
+  if (cap >= 300) return [CARRY, CARRY, CARRY, CARRY, MOVE, MOVE];
+  if (cap >= 200) return [CARRY, CARRY, MOVE, MOVE];
+  return [CARRY, MOVE];
+};
+
+const buildWorkerBody = (cap: number): BodyPartConstant[] => {
+  if (cap >= 550) return [WORK, WORK, WORK, CARRY, CARRY, MOVE, MOVE, MOVE];
+  if (cap >= 400) return [WORK, WORK, CARRY, CARRY, MOVE, MOVE];
+  if (cap >= 350) return [WORK, WORK, CARRY, MOVE, MOVE];
+  return [WORK, CARRY, MOVE];
+};
+
+const buildDefenderBody = (cap: number): BodyPartConstant[] => {
+  if (cap >= 260) return [MOVE, MOVE, ATTACK, ATTACK];
+  if (cap >= 130) return [MOVE, ATTACK];
+  return [MOVE];
+};
+
+const buildRemoteHarvesterBody = (cap: number): BodyPartConstant[] => {
+  if (cap >= 450) return [WORK, WORK, WORK, CARRY, MOVE, MOVE, MOVE];
+  if (cap >= 350) return [WORK, WORK, CARRY, MOVE, MOVE];
+  return [WORK, CARRY, MOVE, MOVE];
+};
+
+const buildRemoteHaulerBody = (cap: number): BodyPartConstant[] => {
+  if (cap >= 400) return [CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE];
+  if (cap >= 300) return [CARRY, CARRY, CARRY, MOVE, MOVE, MOVE];
+  return [CARRY, CARRY, MOVE, MOVE];
+};

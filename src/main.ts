@@ -1,5 +1,9 @@
 import { CreepManager, SpawnManager } from "managers";
 import { ErrorMapper } from "utils/ErrorMapper";
+import { computeRoomSignals, computeRoomNeeds } from "needs/roomNeeds";
+import { RoomNeeds } from "types/roomNeeds";
+import { Affinity } from "types/affinity";
+import { TaskName } from "types/taskName";
 
 declare global {
   /*
@@ -34,6 +38,8 @@ declare global {
     sourceId?: Id<Source>;
     homeRoom?: string;
     remoteRoom?: string;
+    affinity?: Affinity;
+    currentTask?: TaskName;
   }
 
   // Syntax for adding proprties to `global` (ex "global.log")
@@ -87,6 +93,37 @@ const findContainerSpot = (room: Room, source: Source): RoomPosition | null => {
   return candidates[0];
 };
 
+const planExtensions = (room: Room) => {
+  if (!room.controller) return;
+  const allowed = CONTROLLER_STRUCTURES[STRUCTURE_EXTENSION][room.controller.level] as number;
+  const existing = room.find(FIND_MY_STRUCTURES, {
+    filter: (s) => s.structureType === STRUCTURE_EXTENSION,
+  }).length;
+  const sites = room.find(FIND_MY_CONSTRUCTION_SITES, {
+    filter: (s) => s.structureType === STRUCTURE_EXTENSION,
+  }).length;
+  if (existing + sites >= allowed) return;
+
+  const spawn = room.find(FIND_MY_SPAWNS)[0];
+  if (!spawn) return;
+
+  const terrain = room.getTerrain();
+  for (let radius = 2; radius <= 6; radius++) {
+    for (let dx = -radius; dx <= radius; dx++) {
+      for (let dy = -radius; dy <= radius; dy++) {
+        if (Math.abs(dx) !== radius && Math.abs(dy) !== radius) continue;
+        const x = spawn.pos.x + dx;
+        const y = spawn.pos.y + dy;
+        if (x < 1 || x > 48 || y < 1 || y > 48) continue;
+        if (terrain.get(x, y) === TERRAIN_MASK_WALL) continue;
+        if (room.lookForAt(LOOK_STRUCTURES, x, y).length > 0) continue;
+        if (room.lookForAt(LOOK_CONSTRUCTION_SITES, x, y).length > 0) continue;
+        if (room.createConstructionSite(x, y, STRUCTURE_EXTENSION) === OK) return;
+      }
+    }
+  }
+};
+
 const planSourceContainers = (room: Room) => {
   const sources = room.find(FIND_SOURCES);
   for (const source of sources) {
@@ -132,22 +169,6 @@ const runThreatResponse = (room: Room): boolean => {
   return true;
 };
 
-type RoomTargets = {
-  builders: number;
-  harvesters: number;
-  upgraders: number;
-  defenders: number;
-  haulers: number;
-};
-
-type RoomSignals = {
-  sourceCount: number;
-  hasConstruction: boolean;
-  sourceDropEnergy: number;
-  extensionFillRatio: number;
-  idleSpawnCount: number;
-};
-
 const SOURCE_DROP_WARNING_THRESHOLD = 350;
 const SOURCE_DROP_WARNING_STREAK = 3;
 const REMOTE_HOSTILE_PAUSE_TICKS = 150;
@@ -155,104 +176,8 @@ const ROAD_PLANNER_INTERVAL = 25;
 const ROAD_SITE_PLACEMENT_LIMIT = 4;
 const MAX_ACTIVE_SITES_PER_ROOM = 14;
 
-const clamp = (value: number, min: number, max: number): number =>
-  Math.min(max, Math.max(min, value));
 
-const getRoomSignals = (room: Room): RoomSignals => {
-  const sources = room.find(FIND_SOURCES);
-  const sourceCount = sources.length;
-  const hasConstruction = room.find(FIND_CONSTRUCTION_SITES).length > 0;
-
-  let sourceDropEnergy = 0;
-  for (const source of sources) {
-    const drops = source.pos.findInRange(FIND_DROPPED_RESOURCES, 2, {
-      filter: (resource) => resource.resourceType === RESOURCE_ENERGY,
-    });
-    for (const drop of drops) {
-      sourceDropEnergy += drop.amount;
-    }
-  }
-
-  const energyStructures = room.find(FIND_MY_STRUCTURES, {
-    filter: (structure): structure is StructureExtension | StructureSpawn =>
-      structure.structureType === STRUCTURE_EXTENSION ||
-      structure.structureType === STRUCTURE_SPAWN,
-  });
-
-  let totalCapacity = 0;
-  let totalStored = 0;
-  for (const structure of energyStructures) {
-    totalCapacity += structure.store.getCapacity(RESOURCE_ENERGY);
-    totalStored += structure.store.getUsedCapacity(RESOURCE_ENERGY);
-  }
-  const extensionFillRatio =
-    totalCapacity > 0 ? totalStored / totalCapacity : 0;
-
-  const idleSpawnCount = room.find(FIND_MY_SPAWNS, {
-    filter: (spawn) => spawn.spawning == null,
-  }).length;
-
-  return {
-    sourceCount,
-    hasConstruction,
-    sourceDropEnergy,
-    extensionFillRatio,
-    idleSpawnCount,
-  };
-};
-
-const getRoomTargets = (
-  signals: RoomSignals,
-  isThreatened: boolean
-): RoomTargets => {
-
-  const harvesters = Math.max(1, Math.min(signals.sourceCount, 2));
-  let haulers = signals.sourceCount === 1 ? 2 : signals.sourceCount;
-  let builders = signals.hasConstruction ? 2 : 1;
-  let upgraders = signals.sourceCount === 1 ? 3 : 2;
-
-  if (signals.sourceDropEnergy >= 250) {
-    haulers += 1;
-  }
-
-  if (signals.extensionFillRatio < 0.5 && signals.idleSpawnCount > 0) {
-    haulers += 1;
-    upgraders -= 1;
-  }
-
-  if (signals.extensionFillRatio > 0.9 && !signals.hasConstruction) {
-    upgraders += 1;
-  }
-
-  builders = clamp(builders, 1, 3);
-  upgraders = clamp(upgraders, 1, 4);
-  haulers = clamp(haulers, 1, 4);
-
-  if (isThreatened) {
-    return {
-      builders: 1,
-      harvesters,
-      upgraders: 1,
-      defenders: 1,
-      haulers,
-    };
-  }
-
-  return {
-    builders,
-    harvesters,
-    upgraders,
-    defenders: 0,
-    haulers,
-  };
-};
-
-const logRoomTuning = (
-  room: Room,
-  signals: RoomSignals,
-  targets: RoomTargets,
-  isThreatened: boolean
-) => {
+const logRoomTuning = (room: Room, needs: RoomNeeds, signals: ReturnType<typeof computeRoomSignals>) => {
   if (Game.time % 25 !== 0) {
     return;
   }
@@ -264,17 +189,16 @@ const logRoomTuning = (
   console.log(
     [
       `[room:${room.name}]`,
-      `threat=${isThreatened ? 1 : 0}`,
+      `threat=${signals.isThreatened ? 1 : 0}`,
       `sources=${signals.sourceCount}`,
       `drop=${signals.sourceDropEnergy}`,
       `fill=${signals.extensionFillRatio.toFixed(2)}`,
-      `idleSpawns=${signals.idleSpawnCount}`,
-      `targets=b:${targets.builders},h:${targets.harvesters},u:${targets.upgraders},d:${targets.defenders},c:${targets.haulers}`,
+      `needs=harvest:${needs.harvest.toFixed(2)},haul:${needs.haul.toFixed(2)},build:${needs.build.toFixed(2)},upgrade:${needs.upgrade.toFixed(2)},defend:${needs.defend.toFixed(2)}`,
     ].join(" ")
   );
 };
 
-const warnOnSustainedSourceOverflow = (room: Room, signals: RoomSignals) => {
+const warnOnSustainedSourceOverflow = (room: Room, signals: ReturnType<typeof computeRoomSignals>) => {
   if (Game.time % 25 !== 0) {
     return;
   }
@@ -504,52 +428,41 @@ const evaluateRemoteSafety = (homeRoom: Room, remoteRoomName: string): boolean =
 };
 
 export const loop = ErrorMapper.wrapLoop(() => {
-  //console.log(`Current game tick is ${Game.time}`);
-  // Automatically delete memory of missing creeps
   screepManager.cleanup();
 
-  for (const room of getOwnedRooms()) {
-    // getStrategy(room: Room) => {
-    //   buildings: [STRUCTURE, STRUCTURE, STRUCTURE, STRUCTURE]
-    //   builders: #,
-    //   harvesters: #,
-    //   upgrade: #
-    // }: Strategy
+  const needsByRoom = new Map<string, RoomNeeds>();
 
+  for (const room of getOwnedRooms()) {
     planSourceContainers(room);
+    planExtensions(room);
     planRoadNetwork(room);
     enforceActiveConstructionLimit(room);
+
     const isThreatened = runThreatResponse(room);
-    const signals = getRoomSignals(room);
-    const targets = getRoomTargets(signals, isThreatened);
-
-    screepManager.maintain(
-      room,
-      targets.builders,
-      targets.harvesters,
-      targets.upgraders,
-      targets.defenders,
-      targets.haulers
-    );
-
-    logRoomTuning(room, signals, targets, isThreatened);
-    warnOnSustainedSourceOverflow(room, signals);
-
     const remoteTargetRoom = pickRemoteTargetRoom(room);
-    if (remoteTargetRoom && Game.rooms[remoteTargetRoom]) {
-      planSourceContainers(Game.rooms[remoteTargetRoom]);
-    }
     const canRunRemote =
       !isThreatened &&
       remoteTargetRoom != null &&
       room.energyCapacityAvailable >= 300 &&
-      signals.extensionFillRatio >= 0.6 &&
       evaluateRemoteSafety(room, remoteTargetRoom);
+
+    const signals = computeRoomSignals(room, isThreatened, canRunRemote);
+    const needs = computeRoomNeeds(signals);
+    needsByRoom.set(room.name, needs);
+
+    screepManager.maintain(room, needs);
+
+    logRoomTuning(room, needs, signals);
+    warnOnSustainedSourceOverflow(room, signals);
+
+    if (remoteTargetRoom && Game.rooms[remoteTargetRoom]) {
+      planSourceContainers(Game.rooms[remoteTargetRoom]);
+    }
 
     if (remoteTargetRoom) {
       screepManager.maintainRemote(room, remoteTargetRoom, 1, 1, canRunRemote);
     }
   }
 
-  screepManager.work();
+  screepManager.work(needsByRoom);
 });
