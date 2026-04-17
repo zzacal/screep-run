@@ -28,6 +28,9 @@ const buildHarvesterBody = (cap: number): BodyPartConstant[] => {
 };
 
 const buildHaulerBody = (cap: number): BodyPartConstant[] => {
+  if (cap >= 750) return [CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE];
+  if (cap >= 600) return [CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE];
+  if (cap >= 450) return [CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE];
   if (cap >= 300) return [CARRY, CARRY, CARRY, CARRY, MOVE, MOVE];
   if (cap >= 200) return [CARRY, CARRY, MOVE, MOVE];
   return [CARRY, MOVE];

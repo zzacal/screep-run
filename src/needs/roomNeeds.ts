@@ -9,6 +9,7 @@ export interface RoomSignals {
   isThreatened: boolean;
   remoteEnabled: boolean;
   repairUrgency: number;
+  armedTowerCount: number;
 }
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
@@ -53,6 +54,12 @@ export const computeRoomSignals = (room: Room, isThreatened: boolean, remoteEnab
   });
   const repairUrgency = clamp01(damagedStructures.length / 5);
 
+  const armedTowerCount = room.find(FIND_MY_STRUCTURES, {
+    filter: (s): s is StructureTower =>
+      s.structureType === STRUCTURE_TOWER &&
+      s.store.getUsedCapacity(RESOURCE_ENERGY) > 0,
+  }).length;
+
   return {
     sourceCount,
     hasConstruction,
@@ -62,11 +69,12 @@ export const computeRoomSignals = (room: Room, isThreatened: boolean, remoteEnab
     isThreatened,
     remoteEnabled,
     repairUrgency,
+    armedTowerCount,
   };
 };
 
 export const computeRoomNeeds = (signals: RoomSignals): RoomNeeds => {
-  const { extensionFillRatio, sourceDropEnergy, hasConstruction, isThreatened, remoteEnabled, repairUrgency } = signals;
+  const { extensionFillRatio, sourceDropEnergy, hasConstruction, isThreatened, remoteEnabled, repairUrgency, armedTowerCount } = signals;
 
   const harvest = clamp01(0.4 + (1 - extensionFillRatio) * 0.3);
 
@@ -76,7 +84,7 @@ export const computeRoomNeeds = (signals: RoomSignals): RoomNeeds => {
 
   const build = hasConstruction ? 0.7 : 0.0;
   const upgrade = clamp01(0.4 + extensionFillRatio * 0.4);
-  const defend = isThreatened ? 1.0 : 0.0;
+  const defend = isThreatened && armedTowerCount === 0 ? 1.0 : 0.0;
   const remoteHarvest = remoteEnabled ? 0.5 : 0.0;
   const remoteHaul = remoteEnabled ? 0.5 : 0.0;
   const repair = repairUrgency > 0 ? clamp01(0.4 + repairUrgency * 0.5) : 0.0;

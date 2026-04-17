@@ -440,8 +440,10 @@ export const loop = ErrorMapper.wrapLoop(() => {
 
     const isThreatened = runThreatResponse(room);
     const remoteTargetRoom = pickRemoteTargetRoom(room);
+    const isOverflowing = (Memory.roomFlow?.[room.name]?.sourceDropHighStreak ?? 0) >= SOURCE_DROP_WARNING_STREAK;
     const canRunRemote =
       !isThreatened &&
+      !isOverflowing &&
       remoteTargetRoom != null &&
       room.energyCapacityAvailable >= 300 &&
       evaluateRemoteSafety(room, remoteTargetRoom);
