@@ -1,0 +1,52 @@
+name: pserver-tune
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pserver-tune
+  cancel-in-progress: false
+
+jobs:
+  tune:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - run: npm ci
+
+      - name: Write pserver credentials
+        run: |
+          cat > screeps.json <<'EOF'
+          ${{ secrets.SCREEPS_JSON }}
+          EOF
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: "/pserver-tune"
+          claude_args: "--max-turns 40"
+
+      - name: Commit any code changes back to repo
+        run: |
+          rm -f screeps.json
+          if [ -n "$(git status --porcelain)" ]; then
+            git config user.name "pserver-tune-bot"
+            git config user.email "github-actions@users.noreply.github.com"
+            git add -A
+            git commit -m "pserver-tune: automated bot improvements"
+            git push
+          else
+            echo "No code changes to commit"
+          fi

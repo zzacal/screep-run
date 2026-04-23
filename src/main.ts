@@ -124,6 +124,48 @@ const planExtensions = (room: Room) => {
   }
 };
 
+const planStructureNearSpawn = (
+  room: Room,
+  structureType: BuildableStructureConstant,
+  minRadius: number,
+  maxRadius: number
+) => {
+  if (!room.controller) return;
+  const allowed = CONTROLLER_STRUCTURES[structureType][room.controller.level] as number;
+  if (!allowed) return;
+
+  const existing = room.find(FIND_MY_STRUCTURES, {
+    filter: (s) => s.structureType === structureType,
+  }).length;
+  const sites = room.find(FIND_MY_CONSTRUCTION_SITES, {
+    filter: (s) => s.structureType === structureType,
+  }).length;
+  if (existing + sites >= allowed) return;
+
+  const spawn = room.find(FIND_MY_SPAWNS)[0];
+  if (!spawn) return;
+
+  const terrain = room.getTerrain();
+  for (let radius = minRadius; radius <= maxRadius; radius++) {
+    for (let dx = -radius; dx <= radius; dx++) {
+      for (let dy = -radius; dy <= radius; dy++) {
+        if (Math.abs(dx) !== radius && Math.abs(dy) !== radius) continue;
+        const x = spawn.pos.x + dx;
+        const y = spawn.pos.y + dy;
+        if (x < 1 || x > 48 || y < 1 || y > 48) continue;
+        if (terrain.get(x, y) === TERRAIN_MASK_WALL) continue;
+        if (room.lookForAt(LOOK_STRUCTURES, x, y).length > 0) continue;
+        if (room.lookForAt(LOOK_CONSTRUCTION_SITES, x, y).length > 0) continue;
+        if (room.createConstructionSite(x, y, structureType) === OK) return;
+      }
+    }
+  }
+};
+
+const planTowers = (room: Room) => planStructureNearSpawn(room, STRUCTURE_TOWER, 2, 5);
+
+const planStorage = (room: Room) => planStructureNearSpawn(room, STRUCTURE_STORAGE, 1, 3);
+
 const planSourceContainers = (room: Room) => {
   const sources = room.find(FIND_SOURCES);
   for (const source of sources) {
@@ -435,6 +477,8 @@ export const loop = ErrorMapper.wrapLoop(() => {
   for (const room of getOwnedRooms()) {
     planSourceContainers(room);
     planExtensions(room);
+    planTowers(room);
+    planStorage(room);
     planRoadNetwork(room);
     enforceActiveConstructionLimit(room);
 
