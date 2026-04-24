@@ -166,6 +166,27 @@ const planTowers = (room: Room) => planStructureNearSpawn(room, STRUCTURE_TOWER,
 
 const planStorage = (room: Room) => planStructureNearSpawn(room, STRUCTURE_STORAGE, 1, 3);
 
+const runLinks = (room: Room): void => {
+  if (!room.controller) return;
+  const links = room.find(FIND_MY_STRUCTURES, {
+    filter: (s): s is StructureLink => s.structureType === STRUCTURE_LINK,
+  });
+  if (links.length < 2) return;
+
+  const controllerLink = links.reduce((closest, link) =>
+    link.pos.getRangeTo(room.controller!) < closest.pos.getRangeTo(room.controller!)
+      ? link
+      : closest
+  );
+
+  for (const link of links) {
+    if (link.id === controllerLink.id) continue;
+    if (link.cooldown === 0 && link.store.energy > 0) {
+      link.transferEnergy(controllerLink);
+    }
+  }
+};
+
 const planSourceContainers = (room: Room) => {
   const sources = room.find(FIND_SOURCES);
   for (const source of sources) {
@@ -481,6 +502,7 @@ export const loop = ErrorMapper.wrapLoop(() => {
     planStorage(room);
     planRoadNetwork(room);
     enforceActiveConstructionLimit(room);
+    runLinks(room);
 
     const isThreatened = runThreatResponse(room);
     const remoteTargetRoom = pickRemoteTargetRoom(room);
