@@ -39,8 +39,8 @@ jobs:
           prompt: "Read .claude/skills/pserver-tune/skill.md and follow its instructions to inspect the live pserver and ship one targeted bot improvement. The skill file is authoritative — do not substitute your own plan."
           show_full_output: true
           claude_args: >-
-            --max-turns 40
-            --allowed-tools "Read,Edit,Write,Grep,Bash(curl:*),Bash(/usr/bin/python3:*),Bash(npm run build),Bash(npm run push-pserver),Bash(sleep:*),Bash(ls:*),Bash(grep:*)"
+            --max-turns 60
+            --allowed-tools "Read,Edit,Write,Grep,Bash(curl:*),Bash(/usr/bin/python3:*),Bash(npm run build),Bash(npm run push-pserver),Bash(mkdir:*),Bash(ls:*),Bash(grep:*)"
 
       - name: Commit any code changes back to repo
         run: |
