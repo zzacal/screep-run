@@ -1,7 +1,7 @@
 ---
 name: pserver-tune
 description: Inspect the live Screeps pserver game state, identify gaps in the bot's behavior, and improve the code to address them. Use when the user says "check on the pserver", "see what to do next", "tune the bot", or any open-ended prompt asking to move bot progress forward.
-allowed-tools: Read, Edit, Write, Grep, Bash(curl:*), Bash(/usr/bin/python3:*), Bash(npm run build), Bash(npm run push-pserver), Bash(mkdir:*), Bash(ls:*), Bash(grep:*)
+allowed-tools: Read, Edit, Write, Grep, Bash(curl:*), Bash(/usr/bin/python3:*), Bash(npm run build), Bash(npm run push-pserver), Bash(ls:*), Bash(grep:*)
 ---
 
 # Pserver Tune
@@ -12,12 +12,11 @@ Inspect the live pserver, find concrete gaps between what the bot *does* and wha
 
 This skill runs both locally and in CI via `anthropics/claude-code-action`. The action's Bash sandbox is stricter than a local shell — plan accordingly:
 
-- **No writes outside the repo workdir.** Use `.scratch/` (gitignored) for response bodies, auth dumps, headers. `/tmp/` is blocked.
+- **No writes outside the repo workdir.** `/tmp/` is blocked.
+- **No subdirectory creation.** Even `mkdir .scratch` inside the workdir is denied. Write scratch files directly at the repo root with the prefix `pserver-scratch-` (gitignored, cleaned up by the workflow). Examples: `pserver-scratch-auth.json`, `pserver-scratch-memory.json`, `pserver-scratch-rooms.json`.
 - **No long `sleep` commands.** Do not try to `sleep N && curl ...` to wait for a push to propagate. Verification happens on the *next* invocation.
 - **Keep bash one-liners simple.** Prefer separate `curl -o <file>` calls, then read the file with `Read` or parse with `python3`. Avoid compound commands with `&&`, heredocs-with-comments, or shell expansions that trip validation.
 - **Be decisive with turn budget.** `--max-turns` is bounded. Don't retry failing commands; switch approach. If a curl fails, re-auth once and move on.
-
-Run `mkdir -p .scratch` once at the start.
 
 ## Step 1 — Read credentials
 
@@ -31,18 +30,18 @@ Write the auth response to a file, then parse it:
 curl -s -X POST http://<HOST>:<PORT>/api/auth/signin \
   -H "Content-Type: application/json" \
   -d '{"email":"<EMAIL>","password":"<PASS>"}' \
-  -o .scratch/auth.json
+  -o pserver-scratch-auth.json
 ```
 
 ```bash
-/usr/bin/python3 -c "import json; print(json.load(open('.scratch/auth.json'))['token'])"
+/usr/bin/python3 -c "import json; print(json.load(open('pserver-scratch-auth.json'))['token'])"
 ```
 
 Capture the printed token into a shell var in a subsequent step, or just re-parse from the file as needed. Subsequent requests: send `X-Token: $TOKEN` and `X-Username: $TOKEN`. The server sometimes rotates the token back in the `X-Token` response header — if a call 401s, re-auth once and retry. Do not loop retries.
 
 Use `/usr/bin/python3` explicitly — the repo's `.tool-versions` pins a non-default python.
 
-Endpoints (always `-o .scratch/<name>.json`, never stdout-piped):
+Endpoints (always `-o pserver-scratch-<name>.json`, never stdout-piped):
 
 - `GET /api/user/overview?interval=8&shard=shard0&statName=energyControl` → `rooms` array of owned rooms
 - `GET /api/game/room-objects?room=<ROOM>&shard=shard0` → every object in the room (controller, spawn, creeps, structures, sites, dropped energy)
@@ -50,7 +49,7 @@ Endpoints (always `-o .scratch/<name>.json`, never stdout-piped):
 
 ```python
 import base64, gzip, json
-raw = json.load(open('.scratch/memory.json'))['data']
+raw = json.load(open('pserver-scratch-memory.json'))['data']
 mem = json.loads(gzip.decompress(base64.b64decode(raw[3:])))
 ```
 
@@ -116,6 +115,6 @@ npm run push-pserver
 ## Guardrails
 
 - Never push to `push-main`, `push-season`, or similar — pserver only.
-- Don't commit `screeps.json` or `.scratch/`; both are gitignored.
+- Don't commit `screeps.json` or any `pserver-scratch-*` files; both patterns are gitignored.
 - One change per invocation. If the room has multiple gaps, pick the highest-leverage one, implement, and stop. Leave follow-ups for the next run.
 - If no meaningful gap exists, say so and exit — don't invent work.
