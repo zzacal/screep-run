@@ -36,7 +36,7 @@ jobs:
       - uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          prompt: "Use the pserver-tune skill to inspect the live pserver and ship one targeted bot improvement."
+          prompt: "Read .claude/skills/pserver-tune/skill.md and follow its instructions to inspect the live pserver and ship one targeted bot improvement. The skill file is authoritative — do not substitute your own plan."
           show_full_output: true
           claude_args: >-
             --max-turns 40
