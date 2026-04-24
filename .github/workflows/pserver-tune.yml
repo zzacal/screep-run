@@ -37,7 +37,10 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: "Use the pserver-tune skill to inspect the live pserver and ship one targeted bot improvement."
-          claude_args: "--max-turns 40"
+          show_full_output: true
+          claude_args: >-
+            --max-turns 40
+            --allowed-tools "Read,Edit,Write,Grep,Bash(curl:*),Bash(/usr/bin/python3:*),Bash(npm run build),Bash(npm run push-pserver),Bash(sleep:*),Bash(ls:*),Bash(grep:*)"
 
       - name: Commit any code changes back to repo
         run: |
