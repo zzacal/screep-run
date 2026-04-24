@@ -15,6 +15,18 @@ export const upgrade = (creep: Creep) => {
       moveToTarget(creep, creep.room.controller!, "#ffffff");
     }
   } else {
+    const nearbyLink = creep.pos.findInRange(FIND_MY_STRUCTURES, 3, {
+      filter: (s): s is StructureLink =>
+        s.structureType === STRUCTURE_LINK && (s as StructureLink).store.energy > 0,
+    })[0] as StructureLink | undefined;
+
+    if (nearbyLink) {
+      if (creep.withdraw(nearbyLink, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+        moveToTarget(creep, nearbyLink, "#ffaa00");
+      }
+      return;
+    }
+
     const source = findReachableSource(creep);
     if (!source) {
       return;
