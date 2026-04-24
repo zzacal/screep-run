@@ -68,6 +68,20 @@ const getDeliveryTarget = (creep: Creep) => {
     return primaryTarget;
   }
 
+  const controller = creep.room.controller;
+  if (controller) {
+    const sourceLinks = creep.room.find(FIND_MY_STRUCTURES, {
+      filter: (structure): structure is StructureLink =>
+        structure.structureType === STRUCTURE_LINK &&
+        structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0 &&
+        structure.pos.getRangeTo(controller) > 4,
+    });
+    const linkTarget = creep.pos.findClosestByPath(sourceLinks);
+    if (linkTarget) {
+      return linkTarget;
+    }
+  }
+
   if (creep.room.find(FIND_CONSTRUCTION_SITES).length > 0) {
     const builders = creep.room.find(FIND_MY_CREEPS, {
       filter: (worker) =>
