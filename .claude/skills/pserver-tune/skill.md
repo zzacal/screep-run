@@ -112,6 +112,35 @@ npm run push-pserver
 
 **Do not attempt live verification in the same run.** The next invocation will observe the effect. This is a hard rule for CI — attempting to `sleep` and re-query burns turns for no benefit.
 
+## Step 6 — Write the commit message
+
+The CI workflow commits and pushes for you, but only if you write a message file at `pserver-scratch-commit-msg.txt`. Use the `Write` tool to create it with this shape:
+
+```
+pserver-tune: <imperative one-line summary, ≤72 chars>
+
+<2–5 line body explaining WHY: which observed gap drove this change,
+and how the change closes it. Reference rooms, RCL, signal values,
+or symptom counts when relevant.>
+```
+
+Concrete example:
+
+```
+pserver-tune: route source links to controller link
+
+Room W5N8 hit RCL5 and built 2 links, but no transfer logic existed —
+the source-side link sat full at 800/800 while upgraders walked back
+to source. runLinks() in the main loop now ships from any non-controller
+link to the closest-to-controller link each tick.
+```
+
+Required:
+
+- Subject prefixed with `pserver-tune:` so the history stays greppable.
+- Body explains the *why* (the gap), not the *what* (the diff already shows that).
+- Skip the file if you didn't actually change code — the workflow falls back to a generic message and warns.
+
 ## Guardrails
 
 - Never push to `push-main`, `push-season`, or similar — pserver only.

@@ -46,13 +46,19 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          rm -f screeps.json pserver-scratch-*
+          rm -f screeps.json
           if [ -n "$(git status --porcelain)" ]; then
             git config user.name "pserver-tune-bot"
             git config user.email "github-actions@users.noreply.github.com"
             git add -A
-            git commit -m "pserver-tune: automated bot improvements"
+            if [ -s pserver-scratch-commit-msg.txt ]; then
+              git commit -F pserver-scratch-commit-msg.txt
+            else
+              echo "WARN: bot did not write pserver-scratch-commit-msg.txt; using fallback message" >&2
+              git commit -m "pserver-tune: automated bot improvements"
+            fi
             git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:main
           else
             echo "No code changes to commit"
           fi
+          rm -f pserver-scratch-*
