@@ -41,6 +41,12 @@ const getBuildTarget = (creep: Creep): ConstructionSite | null => {
         return null;
     }
 
+    // In spawn-recovery mode, build the spawn before anything else
+    if (creep.room.find(FIND_MY_SPAWNS).length === 0) {
+        const spawnSite = targets.find((t) => t.structureType === STRUCTURE_SPAWN);
+        if (spawnSite) return spawnSite;
+    }
+
     let best: ConstructionSite | null = null;
     let bestPriority = -1;
 
