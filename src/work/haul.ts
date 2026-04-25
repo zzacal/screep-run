@@ -3,12 +3,13 @@ import { CreepRole } from "types/creepRole";
 
 const MIN_SOURCE_DROP_PICKUP = 30;
 const MIN_GENERAL_DROP_PICKUP = 50;
+const MIN_SOURCE_CONTAINER_PICKUP = 100;
 
 const getPickupTarget = (creep: Creep) => {
   const sourceContainers = creep.room.find(FIND_STRUCTURES, {
     filter: (structure): structure is StructureContainer =>
       structure.structureType === STRUCTURE_CONTAINER &&
-      structure.store.getUsedCapacity(RESOURCE_ENERGY) > 0 &&
+      structure.store.getUsedCapacity(RESOURCE_ENERGY) >= MIN_SOURCE_CONTAINER_PICKUP &&
       structure.pos.findInRange(FIND_SOURCES, 1).length > 0,
   });
 
