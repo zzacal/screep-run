@@ -85,7 +85,8 @@ export const computeRoomNeeds = (signals: RoomSignals): RoomNeeds => {
   const haul = clamp01(Math.max(haulFromFill, haulFromDrop));
 
   const build = hasConstruction ? 0.7 : 0.0;
-  const upgrade = clamp01(0.4 + extensionFillRatio * 0.4);
+  const upgradeOverflowBoost = clamp01(sourceDropEnergy / 400);
+  const upgrade = clamp01(0.4 + extensionFillRatio * 0.4 + upgradeOverflowBoost * 0.4);
   const defend = isThreatened && armedTowerCount === 0 ? 1.0 : 0.0;
   const remoteHarvest = remoteEnabled ? 0.5 : 0.0;
   const remoteHaul = remoteEnabled ? 0.5 : 0.0;
