@@ -168,6 +168,8 @@ const planStorage = (room: Room) => planStructureNearSpawn(room, STRUCTURE_STORA
 
 const planTerminal = (room: Room) => planStructureNearSpawn(room, STRUCTURE_TERMINAL, 1, 6);
 
+const planLabs = (room: Room) => planStructureNearSpawn(room, STRUCTURE_LAB, 2, 7);
+
 const runLinks = (room: Room): void => {
   if (!room.controller) return;
   const links = room.find(FIND_MY_STRUCTURES, {
@@ -503,6 +505,7 @@ export const loop = ErrorMapper.wrapLoop(() => {
     planTowers(room);
     planStorage(room);
     planTerminal(room);
+    planLabs(room);
     planRoadNetwork(room);
     enforceActiveConstructionLimit(room);
     runLinks(room);
