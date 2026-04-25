@@ -223,6 +223,34 @@ const runLinks = (room: Room): void => {
   }
 };
 
+const planSpawn = (room: Room): void => {
+  if (room.find(FIND_MY_SPAWNS).length > 0) return;
+  const hasSite =
+    room.find(FIND_MY_CONSTRUCTION_SITES, {
+      filter: (s) => s.structureType === STRUCTURE_SPAWN,
+    }).length > 0;
+  if (hasSite) return;
+
+  const anchor = room.storage ?? room.controller;
+  if (!anchor) return;
+
+  const terrain = room.getTerrain();
+  for (let radius = 1; radius <= 8; radius++) {
+    for (let dx = -radius; dx <= radius; dx++) {
+      for (let dy = -radius; dy <= radius; dy++) {
+        if (Math.abs(dx) !== radius && Math.abs(dy) !== radius) continue;
+        const x = anchor.pos.x + dx;
+        const y = anchor.pos.y + dy;
+        if (x < 2 || x > 47 || y < 2 || y > 47) continue;
+        if (terrain.get(x, y) === TERRAIN_MASK_WALL) continue;
+        if (room.lookForAt(LOOK_STRUCTURES, x, y).length > 0) continue;
+        if (room.lookForAt(LOOK_CONSTRUCTION_SITES, x, y).length > 0) continue;
+        if (room.createConstructionSite(x, y, STRUCTURE_SPAWN) === OK) return;
+      }
+    }
+  }
+};
+
 const planSourceContainers = (room: Room) => {
   const sources = room.find(FIND_SOURCES);
   for (const source of sources) {
@@ -536,6 +564,7 @@ export const loop = ErrorMapper.wrapLoop(() => {
   const needsByRoom = new Map<string, RoomNeeds>();
 
   for (const room of getOwnedRooms()) {
+    planSpawn(room);
     planSourceContainers(room);
     planExtensions(room);
     planTowers(room);
