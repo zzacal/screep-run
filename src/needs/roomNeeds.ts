@@ -78,7 +78,7 @@ export const computeRoomNeeds = (signals: RoomSignals): RoomNeeds => {
 
   const harvest = clamp01(0.4 + (1 - extensionFillRatio) * 0.3);
 
-  const haulFromFill = clamp01((0.7 - extensionFillRatio) * 1.5);
+  const haulFromFill = clamp01((1.0 - extensionFillRatio) * 1.5);
   const haulFromDrop = clamp01(sourceDropEnergy / 500);
   const haul = clamp01(Math.max(haulFromFill, haulFromDrop));
 
