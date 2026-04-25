@@ -170,6 +170,38 @@ const planTerminal = (room: Room) => planStructureNearSpawn(room, STRUCTURE_TERM
 
 const planLabs = (room: Room) => planStructureNearSpawn(room, STRUCTURE_LAB, 2, 7);
 
+const planLinks = (room: Room): void => {
+  if (!room.controller) return;
+  const allowed = CONTROLLER_STRUCTURES[STRUCTURE_LINK][room.controller.level] as number;
+  if (!allowed) return;
+
+  const existingLinks = room.find(FIND_MY_STRUCTURES, {
+    filter: (s) => s.structureType === STRUCTURE_LINK,
+  });
+  const linkSites = room.find(FIND_MY_CONSTRUCTION_SITES, {
+    filter: (s) => s.structureType === STRUCTURE_LINK,
+  });
+  if (existingLinks.length + linkSites.length >= allowed) return;
+
+  const terrain = room.getTerrain();
+  const allLinks = [...existingLinks, ...linkSites] as Array<{ pos: RoomPosition }>;
+  for (const source of room.find(FIND_SOURCES)) {
+    if (source.pos.findInRange(allLinks, 2).length > 0) continue;
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dy = -1; dy <= 1; dy++) {
+        if (dx === 0 && dy === 0) continue;
+        const x = source.pos.x + dx;
+        const y = source.pos.y + dy;
+        if (x < 1 || x > 48 || y < 1 || y > 48) continue;
+        if (terrain.get(x, y) === TERRAIN_MASK_WALL) continue;
+        if (room.lookForAt(LOOK_STRUCTURES, x, y).length > 0) continue;
+        if (room.lookForAt(LOOK_CONSTRUCTION_SITES, x, y).length > 0) continue;
+        if (room.createConstructionSite(x, y, STRUCTURE_LINK) === OK) return;
+      }
+    }
+  }
+};
+
 const runLinks = (room: Room): void => {
   if (!room.controller) return;
   const links = room.find(FIND_MY_STRUCTURES, {
@@ -506,6 +538,7 @@ export const loop = ErrorMapper.wrapLoop(() => {
     planStorage(room);
     planTerminal(room);
     planLabs(room);
+    planLinks(room);
     planRoadNetwork(room);
     enforceActiveConstructionLimit(room);
     runLinks(room);
