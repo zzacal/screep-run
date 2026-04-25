@@ -565,6 +565,7 @@ export const loop = ErrorMapper.wrapLoop(() => {
 
   for (const room of getOwnedRooms()) {
     planSpawn(room);
+    planStructureNearSpawn(room, STRUCTURE_SPAWN, 2, 6);
     planSourceContainers(room);
     planExtensions(room);
     planTowers(room);
