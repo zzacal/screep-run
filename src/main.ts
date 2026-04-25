@@ -598,12 +598,14 @@ export const loop = ErrorMapper.wrapLoop(() => {
     const isThreatened = runThreatResponse(room);
     const remoteTargetRoom = pickRemoteTargetRoom(room);
     const isOverflowing = (Memory.roomFlow?.[room.name]?.sourceDropHighStreak ?? 0) >= SOURCE_DROP_WARNING_STREAK;
+    // Always evaluate remote safety so the stale-pause safety valve fires even
+    // when the room has no spawn (energyCapacityAvailable < 300).
+    const remoteSafe = remoteTargetRoom != null && evaluateRemoteSafety(room, remoteTargetRoom);
     const canRunRemote =
       !isThreatened &&
       !isOverflowing &&
-      remoteTargetRoom != null &&
-      room.energyCapacityAvailable >= 300 &&
-      evaluateRemoteSafety(room, remoteTargetRoom);
+      remoteSafe &&
+      room.energyCapacityAvailable >= 300;
 
     const signals = computeRoomSignals(room, isThreatened, canRunRemote);
     const needs = computeRoomNeeds(signals);
