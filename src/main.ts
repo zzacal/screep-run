@@ -200,6 +200,24 @@ const planLinks = (room: Room): void => {
       }
     }
   }
+
+  // All sources covered — use remaining link budget for a controller-side link
+  // so runLinks can deliver energy directly to upgraders (upgrade.ts withdraws
+  // from any link within range 3 of the creep).
+  if (room.controller.pos.findInRange(allLinks, 3).length === 0) {
+    for (let dx = -2; dx <= 2; dx++) {
+      for (let dy = -2; dy <= 2; dy++) {
+        if (dx === 0 && dy === 0) continue;
+        const x = room.controller.pos.x + dx;
+        const y = room.controller.pos.y + dy;
+        if (x < 1 || x > 48 || y < 1 || y > 48) continue;
+        if (terrain.get(x, y) === TERRAIN_MASK_WALL) continue;
+        if (room.lookForAt(LOOK_STRUCTURES, x, y).length > 0) continue;
+        if (room.lookForAt(LOOK_CONSTRUCTION_SITES, x, y).length > 0) continue;
+        if (room.createConstructionSite(x, y, STRUCTURE_LINK) === OK) return;
+      }
+    }
+  }
 };
 
 const runLinks = (room: Room): void => {
