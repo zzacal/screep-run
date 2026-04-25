@@ -111,7 +111,18 @@ const getDeliveryTarget = (creep: Creep) => {
       structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0,
   });
 
-  return creep.pos.findClosestByPath(storage);
+  const storageTarget = creep.pos.findClosestByPath(storage);
+  if (storageTarget) {
+    return storageTarget;
+  }
+
+  // No structure sinks remain (pre-storage RCL): deliver directly to upgraders
+  // so containers drain instead of overflowing to the floor.
+  return creep.pos.findClosestByPath(FIND_MY_CREEPS, {
+    filter: (c) =>
+      (c.memory.currentTask === "upgrade" || c.memory.role === CreepRole.upgrader) &&
+      c.store.getFreeCapacity(RESOURCE_ENERGY) > 0,
+  });
 };
 
 export const haul = (creep: Creep) => {
