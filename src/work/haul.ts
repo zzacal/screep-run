@@ -68,6 +68,16 @@ const getDeliveryTarget = (creep: Creep) => {
     return primaryTarget;
   }
 
+  const towers = creep.room.find(FIND_STRUCTURES, {
+    filter: (structure) =>
+      structure.structureType === STRUCTURE_TOWER &&
+      structure.store.getFreeCapacity(RESOURCE_ENERGY) > 200,
+  });
+  const towerTarget = creep.pos.findClosestByPath(towers);
+  if (towerTarget) {
+    return towerTarget;
+  }
+
   const controller = creep.room.controller;
   if (controller) {
     const sourceLinks = creep.room.find(FIND_MY_STRUCTURES, {
@@ -80,16 +90,6 @@ const getDeliveryTarget = (creep: Creep) => {
     if (linkTarget) {
       return linkTarget;
     }
-  }
-
-  const towers = creep.room.find(FIND_STRUCTURES, {
-    filter: (structure) =>
-      structure.structureType === STRUCTURE_TOWER &&
-      structure.store.getFreeCapacity(RESOURCE_ENERGY) > 200,
-  });
-  const towerTarget = creep.pos.findClosestByPath(towers);
-  if (towerTarget) {
-    return towerTarget;
   }
 
   if (creep.room.find(FIND_CONSTRUCTION_SITES).length > 0) {
