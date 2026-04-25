@@ -5,6 +5,7 @@ export interface RoomSignals {
   hasConstruction: boolean;
   sourceDropEnergy: number;
   extensionFillRatio: number;
+  extensionCapacity: number;
   idleSpawnCount: number;
   isThreatened: boolean;
   remoteEnabled: boolean;
@@ -65,6 +66,7 @@ export const computeRoomSignals = (room: Room, isThreatened: boolean, remoteEnab
     hasConstruction,
     sourceDropEnergy,
     extensionFillRatio,
+    extensionCapacity: totalCapacity,
     idleSpawnCount,
     isThreatened,
     remoteEnabled,
@@ -74,11 +76,11 @@ export const computeRoomSignals = (room: Room, isThreatened: boolean, remoteEnab
 };
 
 export const computeRoomNeeds = (signals: RoomSignals): RoomNeeds => {
-  const { extensionFillRatio, sourceDropEnergy, hasConstruction, isThreatened, remoteEnabled, repairUrgency, armedTowerCount } = signals;
+  const { extensionFillRatio, extensionCapacity, sourceDropEnergy, hasConstruction, isThreatened, remoteEnabled, repairUrgency, armedTowerCount } = signals;
 
   const harvest = clamp01(0.4 + (1 - extensionFillRatio) * 0.3);
 
-  const haulFromFill = clamp01((1.0 - extensionFillRatio) * 1.5);
+  const haulFromFill = extensionCapacity > 0 ? clamp01((1.0 - extensionFillRatio) * 1.5) : 0;
   const haulFromDrop = clamp01(sourceDropEnergy / 500);
   const haul = clamp01(Math.max(haulFromFill, haulFromDrop));
 
