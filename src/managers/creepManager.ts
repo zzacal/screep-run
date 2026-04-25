@@ -105,13 +105,18 @@ export class CreepManager {
     const ranked = rankSpawnProfiles(needs, coverage);
 
     for (const { profile, dominantTask } of ranked) {
-      // Size body for capacity; fall back to what's available right now
       let body = buildBodyForTask(dominantTask, room.energyCapacityAvailable);
       if (bodyCost(body) > room.energyAvailable) {
+        // Only downgrade to a cheaper body when there is zero coverage — the
+        // bootstrap case.  If a creep already covers this task, wait for energy
+        // to reach the capacity-sized body instead of spawning a weak one.
+        if (coverage[dominantTask] > 0) {
+          continue;
+        }
         body = buildBodyForTask(dominantTask, room.energyAvailable);
       }
       if (bodyCost(body) > room.energyAvailable) {
-        continue; // can't afford this task's minimum body right now
+        continue;
       }
 
       const sourceId =
