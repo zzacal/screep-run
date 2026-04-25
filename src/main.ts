@@ -501,7 +501,11 @@ const evaluateRemoteSafety = (homeRoom: Room, remoteRoomName: string): boolean =
     Memory.remoteOps[homeRoom.name] ?? (Memory.remoteOps[homeRoom.name] = {});
 
   if (state.pausedUntil && Game.time < state.pausedUntil) {
-    return false;
+    if (state.pausedUntil - Game.time > REMOTE_HOSTILE_PAUSE_TICKS * 10) {
+      state.pausedUntil = 0;
+    } else {
+      return false;
+    }
   }
 
   const remoteRoom = Game.rooms[remoteRoomName];
