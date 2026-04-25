@@ -25,7 +25,21 @@ export const harvest = (creep: Creep) => {
         creep.store.getUsedCapacity(RESOURCE_ENERGY) > 0 &&
         creep.pos.isNearTo(sourceContainer)
     ) {
-        creep.transfer(sourceContainer, RESOURCE_ENERGY);
+        const xferResult = creep.transfer(sourceContainer, RESOURCE_ENERGY);
+        if (xferResult !== ERR_FULL) {
+            return;
+        }
+        // container full — fall through to try a link
+    }
+
+    const sourceLink = source.pos.findInRange(FIND_MY_STRUCTURES, 1, {
+        filter: (s): s is StructureLink =>
+            s.structureType === STRUCTURE_LINK &&
+            s.store.getFreeCapacity(RESOURCE_ENERGY) > 0,
+    })[0] as StructureLink | undefined;
+
+    if (sourceLink && creep.store.getUsedCapacity(RESOURCE_ENERGY) > 0 && creep.pos.isNearTo(sourceLink)) {
+        creep.transfer(sourceLink, RESOURCE_ENERGY);
         return;
     }
 
