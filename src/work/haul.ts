@@ -116,8 +116,18 @@ const getDeliveryTarget = (creep: Creep) => {
     return storageTarget;
   }
 
-  // No structure sinks remain (pre-storage RCL): deliver directly to upgraders
-  // so containers drain instead of overflowing to the floor.
+  // Buffer in the controller container when no storage exists yet.
+  const ctrlContainers = creep.room.find(FIND_STRUCTURES, {
+    filter: (s): s is StructureContainer =>
+      s.structureType === STRUCTURE_CONTAINER &&
+      s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 &&
+      s.pos.findInRange(FIND_SOURCES, 1).length === 0,
+  });
+  const ctrlContainer = creep.pos.findClosestByPath(ctrlContainers);
+  if (ctrlContainer) {
+    return ctrlContainer;
+  }
+
   return creep.pos.findClosestByPath(FIND_MY_CREEPS, {
     filter: (c) =>
       (c.memory.currentTask === "upgrade" || c.memory.role === CreepRole.upgrader) &&

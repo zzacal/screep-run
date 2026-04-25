@@ -269,6 +269,41 @@ const planSpawn = (room: Room): void => {
   }
 };
 
+const planControllerContainer = (room: Room) => {
+  const { controller } = room;
+  if (!controller?.my) return;
+
+  const hasContainer =
+    controller.pos.findInRange(FIND_STRUCTURES, 2, {
+      filter: (s) =>
+        s.structureType === STRUCTURE_CONTAINER &&
+        s.pos.findInRange(FIND_SOURCES, 1).length === 0,
+    }).length > 0;
+  if (hasContainer) return;
+
+  const hasSite =
+    controller.pos.findInRange(FIND_CONSTRUCTION_SITES, 2, {
+      filter: (s) => s.structureType === STRUCTURE_CONTAINER,
+    }).length > 0;
+  if (hasSite) return;
+
+  const terrain = room.getTerrain();
+  for (let r = 1; r <= 2; r++) {
+    for (let dx = -r; dx <= r; dx++) {
+      for (let dy = -r; dy <= r; dy++) {
+        if (Math.abs(dx) !== r && Math.abs(dy) !== r) continue;
+        const x = controller.pos.x + dx;
+        const y = controller.pos.y + dy;
+        if (x < 1 || x > 48 || y < 1 || y > 48) continue;
+        if (terrain.get(x, y) === TERRAIN_MASK_WALL) continue;
+        if (room.lookForAt(LOOK_STRUCTURES, x, y).length > 0) continue;
+        if (room.lookForAt(LOOK_CONSTRUCTION_SITES, x, y).length > 0) continue;
+        if (room.createConstructionSite(x, y, STRUCTURE_CONTAINER) === OK) return;
+      }
+    }
+  }
+};
+
 const planSourceContainers = (room: Room) => {
   const sources = room.find(FIND_SOURCES);
   for (const source of sources) {
@@ -588,6 +623,7 @@ export const loop = ErrorMapper.wrapLoop(() => {
     planSpawn(room);
     planStructureNearSpawn(room, STRUCTURE_SPAWN, 2, 6);
     planSourceContainers(room);
+    planControllerContainer(room);
     planExtensions(room);
     planTowers(room);
     planStorage(room);

@@ -27,6 +27,20 @@ export const upgrade = (creep: Creep) => {
       return;
     }
 
+    const ctrlContainer = creep.room.find(FIND_STRUCTURES, {
+      filter: (s): s is StructureContainer =>
+        s.structureType === STRUCTURE_CONTAINER &&
+        s.store.getUsedCapacity(RESOURCE_ENERGY) >= 50 &&
+        s.pos.findInRange(FIND_SOURCES, 1).length === 0,
+    })[0] as StructureContainer | undefined;
+
+    if (ctrlContainer) {
+      if (creep.withdraw(ctrlContainer, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+        moveToTarget(creep, ctrlContainer, "#ffaa00");
+      }
+      return;
+    }
+
     const source = findReachableSource(creep);
     if (!source) {
       return;
