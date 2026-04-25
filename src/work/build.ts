@@ -5,6 +5,10 @@ const getConstructionPriority = (site: ConstructionSite): number => {
         return 100;
     }
 
+    if (site.structureType === STRUCTURE_LINK) {
+        return 92;
+    }
+
     if (site.structureType === STRUCTURE_EXTENSION) {
         return 90;
     }
