@@ -39,22 +39,22 @@ const getPickupTarget = (creep: Creep) => {
     return dropped;
   }
 
-  const containers = creep.room.find(FIND_STRUCTURES, {
-    filter: (structure) =>
-      ((structure.structureType === STRUCTURE_CONTAINER &&
-        structure.pos.findInRange(FIND_SOURCES, 1).length === 0) ||
-        structure.structureType === STRUCTURE_STORAGE) &&
-      structure.store.getUsedCapacity(RESOURCE_ENERGY) > 0,
-  });
-
-  const anyDrop = creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES, {
-    filter: (resource) => resource.resourceType === RESOURCE_ENERGY,
-  });
-  if (anyDrop) {
-    return anyDrop;
+  const nonSourceContainerOrStorage = creep.pos.findClosestByPath(
+    creep.room.find(FIND_STRUCTURES, {
+      filter: (structure) =>
+        ((structure.structureType === STRUCTURE_CONTAINER &&
+          structure.pos.findInRange(FIND_SOURCES, 1).length === 0) ||
+          structure.structureType === STRUCTURE_STORAGE) &&
+        structure.store.getUsedCapacity(RESOURCE_ENERGY) > 0,
+    })
+  );
+  if (nonSourceContainerOrStorage) {
+    return nonSourceContainerOrStorage;
   }
 
-  return creep.pos.findClosestByPath(containers);
+  return creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES, {
+    filter: (resource) => resource.resourceType === RESOURCE_ENERGY,
+  });
 };
 
 const getDeliveryTarget = (creep: Creep) => {
