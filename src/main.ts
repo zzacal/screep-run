@@ -660,7 +660,9 @@ export const loop = ErrorMapper.wrapLoop(() => {
     }
 
     if (remoteTargetRoom) {
-      screepManager.maintainRemote(room, remoteTargetRoom, 1, 1, canRunRemote);
+      const remoteRoomObj = Game.rooms[remoteTargetRoom];
+      const remoteSources = remoteRoomObj ? remoteRoomObj.find(FIND_SOURCES).length : 1;
+      screepManager.maintainRemote(room, remoteTargetRoom, remoteSources, remoteSources, canRunRemote);
     }
   }
 

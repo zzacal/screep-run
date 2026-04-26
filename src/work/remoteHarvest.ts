@@ -44,7 +44,12 @@ export const remoteHarvest = (creep: Creep) => {
   const sourceId = creep.memory.sourceId;
   let source = sourceId ? Game.getObjectById(sourceId) : null;
   if (!source) {
-    source = creep.pos.findClosestByPath(FIND_SOURCES_ACTIVE);
+    const claimed = Object.values(Game.creeps)
+      .filter(c => c.id !== creep.id && c.memory.remoteRoom === remoteRoom && c.memory.sourceId != null)
+      .map(c => c.memory.sourceId as Id<Source>);
+    const activeSources = creep.room.find(FIND_SOURCES_ACTIVE);
+    const unclaimed = activeSources.filter(s => !claimed.includes(s.id));
+    source = creep.pos.findClosestByPath(unclaimed.length > 0 ? unclaimed : activeSources);
     if (source) {
       creep.memory.sourceId = source.id;
     }
