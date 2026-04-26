@@ -105,6 +105,17 @@ const getDeliveryTarget = (creep: Creep) => {
     }
   }
 
+  const storage = creep.room.find(FIND_STRUCTURES, {
+    filter: (structure) =>
+      structure.structureType === STRUCTURE_STORAGE &&
+      structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0,
+  });
+
+  const storageTarget = creep.pos.findClosestByPath(storage);
+  if (storageTarget) {
+    return storageTarget;
+  }
+
   // Keep non-source containers (e.g. controller buffer) topped up so upgraders
   // don't have to walk to storage for every load.
   const ctrlContainers = creep.room.find(FIND_STRUCTURES, {
@@ -117,17 +128,6 @@ const getDeliveryTarget = (creep: Creep) => {
   const ctrlContainer = creep.pos.findClosestByPath(ctrlContainers);
   if (ctrlContainer) {
     return ctrlContainer;
-  }
-
-  const storage = creep.room.find(FIND_STRUCTURES, {
-    filter: (structure) =>
-      structure.structureType === STRUCTURE_STORAGE &&
-      structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0,
-  });
-
-  const storageTarget = creep.pos.findClosestByPath(storage);
-  if (storageTarget) {
-    return storageTarget;
   }
 
   return creep.pos.findClosestByPath(FIND_MY_CREEPS, {
