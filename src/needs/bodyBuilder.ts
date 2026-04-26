@@ -58,6 +58,8 @@ const buildDefenderBody = (cap: number): BodyPartConstant[] => {
 };
 
 const buildRemoteHarvesterBody = (cap: number): BodyPartConstant[] => {
+  // 5W 1C 6M = 850 cost; full speed on plains (6 non-MOVE × 2 fatigue = 12, 6 MOVE × 2 = 12)
+  if (cap >= 900) return [WORK, WORK, WORK, WORK, WORK, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE];
   if (cap >= 450) return [WORK, WORK, WORK, CARRY, MOVE, MOVE, MOVE];
   if (cap >= 350) return [WORK, WORK, CARRY, MOVE, MOVE];
   return [WORK, CARRY, MOVE, MOVE];
