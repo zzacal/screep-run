@@ -21,6 +21,8 @@ export const buildBodyForTask = (task: TaskName, energyCapacity: number): BodyPa
 };
 
 const buildHarvesterBody = (cap: number): BodyPartConstant[] => {
+  // 5W matches source regeneration (10 energy/tick); 3W only captures 60%
+  if (cap >= 750) return [WORK, WORK, WORK, WORK, WORK, CARRY, MOVE, MOVE, MOVE];
   if (cap >= 550) return [WORK, WORK, WORK, CARRY, MOVE, MOVE, MOVE];
   if (cap >= 400) return [WORK, WORK, CARRY, MOVE, MOVE];
   if (cap >= 300) return [WORK, WORK, CARRY, MOVE];
