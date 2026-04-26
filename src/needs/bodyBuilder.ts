@@ -42,7 +42,7 @@ const buildWorkerBody = (cap: number): BodyPartConstant[] => {
   // 7W 2C 5M = 1050 cost; full speed on roads (10 vs 9)
   if (cap >= 1100) return [WORK, WORK, WORK, WORK, WORK, WORK, WORK, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE];
   // 5W 2C 4M = 800 cost; full speed on roads (8 vs 7)
-  if (cap >= 850) return [WORK, WORK, WORK, WORK, WORK, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE];
+  if (cap >= 800) return [WORK, WORK, WORK, WORK, WORK, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE];
   if (cap >= 550) return [WORK, WORK, WORK, CARRY, CARRY, MOVE, MOVE, MOVE];
   if (cap >= 400) return [WORK, WORK, CARRY, CARRY, MOVE, MOVE];
   if (cap >= 350) return [WORK, WORK, CARRY, MOVE, MOVE];
