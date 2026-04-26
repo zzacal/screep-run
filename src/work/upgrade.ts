@@ -41,6 +41,14 @@ export const upgrade = (creep: Creep) => {
       return;
     }
 
+    const storage = creep.room.storage;
+    if (storage && storage.store.getUsedCapacity(RESOURCE_ENERGY) >= 200) {
+      if (creep.withdraw(storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+        moveToTarget(creep, storage, "#ffaa00");
+      }
+      return;
+    }
+
     const source = findReachableSource(creep);
     if (!source) {
       return;
