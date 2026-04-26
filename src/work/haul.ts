@@ -105,6 +105,24 @@ const getDeliveryTarget = (creep: Creep) => {
     }
   }
 
+  // Keep the controller-side container topped up to a small buffer so
+  // upgraders can draw from the nearest non-source container without walking
+  // to storage. Cap at 200 so a single haul load (400 carry at RCL4) fills it
+  // in one shot and the hauler still delivers the remainder to storage — this
+  // avoids the pre-fix loop where a 500-cap target was drained faster than
+  // haulers could fill it, starving storage indefinitely.
+  const ctrlContainers = creep.room.find(FIND_STRUCTURES, {
+    filter: (s): s is StructureContainer =>
+      s.structureType === STRUCTURE_CONTAINER &&
+      s.store.getUsedCapacity(RESOURCE_ENERGY) < 200 &&
+      s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 &&
+      s.pos.findInRange(FIND_SOURCES, 1).length === 0,
+  });
+  const ctrlContainer = creep.pos.findClosestByPath(ctrlContainers);
+  if (ctrlContainer) {
+    return ctrlContainer;
+  }
+
   const storage = creep.room.find(FIND_STRUCTURES, {
     filter: (structure) =>
       structure.structureType === STRUCTURE_STORAGE &&
@@ -114,20 +132,6 @@ const getDeliveryTarget = (creep: Creep) => {
   const storageTarget = creep.pos.findClosestByPath(storage);
   if (storageTarget) {
     return storageTarget;
-  }
-
-  // Keep non-source containers (e.g. controller buffer) topped up so upgraders
-  // don't have to walk to storage for every load.
-  const ctrlContainers = creep.room.find(FIND_STRUCTURES, {
-    filter: (s): s is StructureContainer =>
-      s.structureType === STRUCTURE_CONTAINER &&
-      s.store.getUsedCapacity(RESOURCE_ENERGY) < 500 &&
-      s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 &&
-      s.pos.findInRange(FIND_SOURCES, 1).length === 0,
-  });
-  const ctrlContainer = creep.pos.findClosestByPath(ctrlContainers);
-  if (ctrlContainer) {
-    return ctrlContainer;
   }
 
   return creep.pos.findClosestByPath(FIND_MY_CREEPS, {
