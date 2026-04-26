@@ -11,6 +11,8 @@ export interface RoomSignals {
   remoteEnabled: boolean;
   repairUrgency: number;
   armedTowerCount: number;
+  hasStorage: boolean;
+  storageUsedRatio: number;
 }
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
@@ -61,6 +63,15 @@ export const computeRoomSignals = (room: Room, isThreatened: boolean, remoteEnab
       s.store.getUsedCapacity(RESOURCE_ENERGY) > 0,
   }).length;
 
+  const storageStructure = room.find(FIND_MY_STRUCTURES, {
+    filter: (s): s is StructureStorage => s.structureType === STRUCTURE_STORAGE,
+  })[0] as StructureStorage | undefined;
+  const hasStorage = storageStructure != null;
+  const storageUsedRatio = hasStorage
+    ? storageStructure.store.getUsedCapacity(RESOURCE_ENERGY) /
+      storageStructure.store.getCapacity(RESOURCE_ENERGY)
+    : 0;
+
   return {
     sourceCount,
     hasConstruction,
@@ -72,17 +83,23 @@ export const computeRoomSignals = (room: Room, isThreatened: boolean, remoteEnab
     remoteEnabled,
     repairUrgency,
     armedTowerCount,
+    hasStorage,
+    storageUsedRatio,
   };
 };
 
 export const computeRoomNeeds = (signals: RoomSignals): RoomNeeds => {
-  const { extensionFillRatio, extensionCapacity, sourceDropEnergy, hasConstruction, isThreatened, remoteEnabled, repairUrgency, armedTowerCount } = signals;
+  const { extensionFillRatio, extensionCapacity, sourceDropEnergy, hasConstruction, isThreatened, remoteEnabled, repairUrgency, armedTowerCount, hasStorage, storageUsedRatio } = signals;
 
   const harvest = clamp01(0.4 + (1 - extensionFillRatio) * 0.3);
 
   const haulFromFill = extensionCapacity > 0 ? clamp01((1.0 - extensionFillRatio) * 1.5) : 0;
   const haulFromDrop = clamp01(sourceDropEnergy / 500);
-  const haul = clamp01(Math.max(haulFromFill, haulFromDrop));
+  // When storage exists but is mostly empty, maintain haulers even when extensions are
+  // full and no energy is currently dropped — without this floor, haul need collapses to
+  // zero and existing haulers are never replaced as they age out, leaving storage empty.
+  const haulFromStorage = hasStorage ? clamp01((1 - storageUsedRatio) * 0.5) : 0;
+  const haul = clamp01(Math.max(haulFromFill, haulFromDrop, haulFromStorage));
 
   const buildOverflowBoost = clamp01(sourceDropEnergy / 400);
   const build = hasConstruction ? clamp01(0.7 + buildOverflowBoost * 0.3) : 0.0;
