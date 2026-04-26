@@ -220,6 +220,24 @@ const planLinks = (room: Room): void => {
   }
 };
 
+const planExtractor = (room: Room): void => {
+  if (!room.controller) return;
+  const allowed = CONTROLLER_STRUCTURES[STRUCTURE_EXTRACTOR][room.controller.level] as number;
+  if (!allowed) return;
+
+  const existing = room.find(FIND_MY_STRUCTURES, {
+    filter: (s) => s.structureType === STRUCTURE_EXTRACTOR,
+  });
+  const sites = room.find(FIND_MY_CONSTRUCTION_SITES, {
+    filter: (s) => s.structureType === STRUCTURE_EXTRACTOR,
+  });
+  if (existing.length + sites.length > 0) return;
+
+  const mineral = room.find(FIND_MINERALS)[0];
+  if (!mineral) return;
+  room.createConstructionSite(mineral.pos.x, mineral.pos.y, STRUCTURE_EXTRACTOR);
+};
+
 const runLinks = (room: Room): void => {
   if (!room.controller) return;
   const links = room.find(FIND_MY_STRUCTURES, {
@@ -654,6 +672,7 @@ export const loop = ErrorMapper.wrapLoop(() => {
     planTerminal(room);
     planLabs(room);
     planLinks(room);
+    planExtractor(room);
     planRoadNetwork(room);
     enforceActiveConstructionLimit(room);
     runLinks(room);
