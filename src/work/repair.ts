@@ -68,7 +68,14 @@ export const repair = (creep: Creep) => {
 
   if (creep.memory.working) {
     const target = getRepairTarget(creep);
-    if (!target) return;
+    if (!target) {
+      // Nothing to repair — end the cycle so the task selector can repurpose this creep
+      // (e.g. upgrade). Without this, a creep holding energy stays stuck with working=true
+      // forever since cycleEnded only fires when the store is empty.
+      creep.memory.working = false;
+      creep.memory.currentTask = undefined;
+      return;
+    }
     const result = creep.repair(target);
     if (result === ERR_NOT_IN_RANGE) {
       moveToTarget(creep, target, "#00ff88");
