@@ -349,6 +349,30 @@ const runThreatResponse = (room: Room): boolean => {
   return true;
 };
 
+const runTowerRepair = (room: Room): void => {
+  const towers = room.find(FIND_MY_STRUCTURES, {
+    filter: (s): s is StructureTower =>
+      s.structureType === STRUCTURE_TOWER &&
+      s.store.getUsedCapacity(RESOURCE_ENERGY) > 500,
+  });
+  if (towers.length === 0) return;
+
+  const damaged = room.find(FIND_STRUCTURES, {
+    filter: (s) =>
+      s.structureType !== STRUCTURE_WALL &&
+      s.structureType !== STRUCTURE_RAMPART &&
+      s.hits < s.hitsMax * 0.75,
+  });
+  if (damaged.length === 0) return;
+
+  const worst = damaged.reduce((a, b) =>
+    a.hits / a.hitsMax < b.hits / b.hitsMax ? a : b
+  );
+  for (const tower of towers) {
+    tower.repair(worst);
+  }
+};
+
 const SOURCE_DROP_WARNING_THRESHOLD = 350;
 const SOURCE_DROP_WARNING_STREAK = 3;
 const REMOTE_HOSTILE_PAUSE_TICKS = 150;
@@ -635,6 +659,9 @@ export const loop = ErrorMapper.wrapLoop(() => {
     runLinks(room);
 
     const isThreatened = runThreatResponse(room);
+    if (!isThreatened) {
+      runTowerRepair(room);
+    }
     const remoteTargetRoom = pickRemoteTargetRoom(room);
     const isOverflowing = (Memory.roomFlow?.[room.name]?.sourceDropHighStreak ?? 0) >= SOURCE_DROP_WARNING_STREAK;
     // Always evaluate remote safety so the stale-pause safety valve fires even
