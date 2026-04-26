@@ -75,7 +75,8 @@ const getBuildTarget = (creep: Creep): ConstructionSite | null => {
 const getBuilderPickupTarget = (creep: Creep) => {
     const localSupply = creep.room.find(FIND_STRUCTURES, {
         filter: (structure) =>
-            (structure.structureType === STRUCTURE_CONTAINER ||
+            ((structure.structureType === STRUCTURE_CONTAINER &&
+                structure.pos.findInRange(FIND_SOURCES, 1).length === 0) ||
                 structure.structureType === STRUCTURE_STORAGE) &&
             structure.store.getUsedCapacity(RESOURCE_ENERGY) > 0,
     });
