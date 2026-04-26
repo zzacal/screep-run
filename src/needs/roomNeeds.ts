@@ -31,8 +31,8 @@ export const computeRoomSignals = (room: Room, isThreatened: boolean, remoteEnab
   }
 
   const energyStructures = room.find(FIND_MY_STRUCTURES, {
-    filter: (structure): structure is StructureExtension =>
-      structure.structureType === STRUCTURE_EXTENSION,
+    filter: (s): s is StructureExtension | StructureSpawn =>
+      s.structureType === STRUCTURE_EXTENSION || s.structureType === STRUCTURE_SPAWN,
   });
 
   let totalCapacity = 0;

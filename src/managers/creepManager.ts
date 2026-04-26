@@ -107,10 +107,11 @@ export class CreepManager {
     for (const { profile, dominantTask } of ranked) {
       let body = buildBodyForTask(dominantTask, room.energyCapacityAvailable);
       if (bodyCost(body) > room.energyAvailable) {
-        // Only downgrade to a cheaper body when there is zero coverage — the
-        // bootstrap case.  If a creep already covers this task, wait for energy
-        // to reach the capacity-sized body instead of spawning a weak one.
-        if (coverage[dominantTask] > 0) {
+        // Allow downgrade when the task is critically urgent (need ≥ 0.85), e.g.
+        // a second hauler needed to drain chronic source overflow.  Otherwise,
+        // wait for the capacity-sized body to avoid spawning a perpetually weak creep.
+        const isUrgent = needs[dominantTask] >= 0.85;
+        if (coverage[dominantTask] > 0 && !isUrgent) {
           continue;
         }
         body = buildBodyForTask(dominantTask, room.energyAvailable);
