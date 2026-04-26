@@ -664,12 +664,22 @@ export const loop = ErrorMapper.wrapLoop(() => {
     }
     const remoteTargetRoom = pickRemoteTargetRoom(room);
     const isOverflowing = (Memory.roomFlow?.[room.name]?.sourceDropHighStreak ?? 0) >= SOURCE_DROP_WARNING_STREAK;
+    // Block remote ops on overflow only when storage is also nearly full (≥80%).
+    // If storage has ample free capacity, source drops are a flow-routing
+    // issue — not a capacity crisis — and halting remote mining makes things worse
+    // by letting remote creeps die out while the streak persists.
+    const roomStorage = room.find(FIND_MY_STRUCTURES, {
+      filter: (s): s is StructureStorage => s.structureType === STRUCTURE_STORAGE,
+    })[0] as StructureStorage | undefined;
+    const storageNearFull = roomStorage == null ||
+      roomStorage.store.getUsedCapacity(RESOURCE_ENERGY) / roomStorage.store.getCapacity(RESOURCE_ENERGY) >= 0.8;
+    const overflowBlocksRemote = isOverflowing && storageNearFull;
     // Always evaluate remote safety so the stale-pause safety valve fires even
     // when the room has no spawn (energyCapacityAvailable < 300).
     const remoteSafe = remoteTargetRoom != null && evaluateRemoteSafety(room, remoteTargetRoom);
     const canRunRemote =
       !isThreatened &&
-      !isOverflowing &&
+      !overflowBlocksRemote &&
       remoteSafe &&
       room.energyCapacityAvailable >= 300;
 
