@@ -95,6 +95,14 @@ export const remoteHarvest = (creep: Creep) => {
     }
   }
 
+  const containerSite = source.pos.findInRange(FIND_CONSTRUCTION_SITES, 1, {
+    filter: (s) => s.structureType === STRUCTURE_CONTAINER,
+  })[0];
+  if (containerSite && creep.store.getUsedCapacity(RESOURCE_ENERGY) > 0) {
+    creep.build(containerSite);
+    return;
+  }
+
   if (creep.store.getFreeCapacity() === 0) {
     creep.drop(RESOURCE_ENERGY);
   }
