@@ -1,5 +1,10 @@
 import { findAssignedSource, findReachableSource, moveToTarget } from "work/utils";
 
+// When the container already holds one hauler-load worth of energy, route
+// surplus harvest directly into the source link so runLinks can forward it
+// to the controller-side link — avoids upgraders walking to sources.
+const SOURCE_CONTAINER_BUFFER = 500;
+
 export const harvest = (creep: Creep) => {
     const source = findAssignedSource(creep) ?? findReachableSource(creep);
     if (!source) {
@@ -16,21 +21,13 @@ export const harvest = (creep: Creep) => {
         return;
     }
 
+    if (creep.store.getUsedCapacity(RESOURCE_ENERGY) === 0) {
+        return;
+    }
+
     const sourceContainer = source.pos.findInRange(FIND_STRUCTURES, 1, {
         filter: (structure) => structure.structureType === STRUCTURE_CONTAINER,
     })[0] as StructureContainer | undefined;
-
-    if (
-        sourceContainer &&
-        creep.store.getUsedCapacity(RESOURCE_ENERGY) > 0 &&
-        creep.pos.isNearTo(sourceContainer)
-    ) {
-        const xferResult = creep.transfer(sourceContainer, RESOURCE_ENERGY);
-        if (xferResult !== ERR_FULL) {
-            return;
-        }
-        // container full — fall through to try a link
-    }
 
     const sourceLink = source.pos.findInRange(FIND_MY_STRUCTURES, 1, {
         filter: (s): s is StructureLink =>
@@ -38,7 +35,24 @@ export const harvest = (creep: Creep) => {
             s.store.getFreeCapacity(RESOURCE_ENERGY) > 0,
     })[0] as StructureLink | undefined;
 
-    if (sourceLink && creep.store.getUsedCapacity(RESOURCE_ENERGY) > 0 && creep.pos.isNearTo(sourceLink)) {
+    // Container has a hauler-load buffered and a link is present — route to link
+    const containerBuffered =
+        sourceContainer != null &&
+        sourceContainer.store.getUsedCapacity(RESOURCE_ENERGY) >= SOURCE_CONTAINER_BUFFER;
+    if (sourceLink && containerBuffered && creep.pos.isNearTo(sourceLink)) {
+        creep.transfer(sourceLink, RESOURCE_ENERGY);
+        return;
+    }
+
+    if (sourceContainer && creep.pos.isNearTo(sourceContainer)) {
+        const xferResult = creep.transfer(sourceContainer, RESOURCE_ENERGY);
+        if (xferResult !== ERR_FULL) {
+            return;
+        }
+        // container full — fall through to try the link
+    }
+
+    if (sourceLink && creep.pos.isNearTo(sourceLink)) {
         creep.transfer(sourceLink, RESOURCE_ENERGY);
         return;
     }
