@@ -98,7 +98,7 @@ export const computeRoomNeeds = (signals: RoomSignals): RoomNeeds => {
   // When storage exists but is mostly empty, maintain haulers even when extensions are
   // full and no energy is currently dropped — without this floor, haul need collapses to
   // zero and existing haulers are never replaced as they age out, leaving storage empty.
-  const haulFromStorage = hasStorage ? clamp01((1 - storageUsedRatio) * 0.5) : 0;
+  const haulFromStorage = hasStorage ? clamp01((1 - storageUsedRatio) * 0.8) : 0;
   const haul = clamp01(Math.max(haulFromFill, haulFromDrop, haulFromStorage));
 
   const buildOverflowBoost = clamp01(sourceDropEnergy / 400);
