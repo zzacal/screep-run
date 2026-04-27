@@ -1,9 +1,11 @@
 import { findAssignedSource, findReachableSource, moveToTarget } from "work/utils";
 
-// When the container already holds one hauler-load worth of energy, route
+// When the container already holds energy above the haul pickup floor, route
 // surplus harvest directly into the source link so runLinks can forward it
 // to the controller-side link — avoids upgraders walking to sources.
-const SOURCE_CONTAINER_BUFFER = 200;
+// Must stay at or below MIN_SOURCE_CONTAINER_PICKUP (100) in haul.ts so
+// containers don't oscillate below the threshold and starve the link chain.
+const SOURCE_CONTAINER_BUFFER = 100;
 
 export const harvest = (creep: Creep) => {
     const source = findAssignedSource(creep) ?? findReachableSource(creep);
