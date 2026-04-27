@@ -14,7 +14,20 @@ export const harvest = (creep: Creep) => {
     }
 
     if (!creep.pos.isNearTo(source)) {
-        moveToTarget(creep, source, "#ffaa00");
+        // If a source link is adjacent to the source, target it for movement — the
+        // link is adjacent to the source, so the creep converges to a tile where it
+        // can both harvest and fill the link instead of parking at the far-side
+        // container (which may be 2 tiles from the link and unable to reach it).
+        // If already near the link but not yet near the source, fall back to the
+        // source directly to avoid oscillating around the link.
+        const nearbyLink = source.pos.findInRange(FIND_MY_STRUCTURES, 1, {
+            filter: (s): s is StructureLink => s.structureType === STRUCTURE_LINK,
+        })[0] as StructureLink | undefined;
+        if (nearbyLink && creep.pos.isNearTo(nearbyLink)) {
+            moveToTarget(creep, source, "#ffaa00");
+        } else {
+            moveToTarget(creep, nearbyLink ?? source, "#ffaa00");
+        }
         return;
     }
 
