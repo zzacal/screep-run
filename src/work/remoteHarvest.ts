@@ -78,7 +78,11 @@ export const remoteHarvest = (creep: Creep) => {
     creep.store.getUsedCapacity(RESOURCE_ENERGY) > 0 &&
     creep.pos.isNearTo(sourceContainer)
   ) {
-    creep.transfer(sourceContainer, RESOURCE_ENERGY);
+    if (sourceContainer.hits < sourceContainer.hitsMax * 0.9) {
+      creep.repair(sourceContainer);
+    } else {
+      creep.transfer(sourceContainer, RESOURCE_ENERGY);
+    }
     return;
   }
 
