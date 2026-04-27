@@ -79,10 +79,8 @@ const getDeliveryTarget = (creep: Creep) => {
     return towerTarget;
   }
 
-  // Fill the controller-side container before source links: upgraders withdraw
-  // from it directly (no runLinks lag), keeping them off sources. At RCL5 with
-  // 1000-carry haulers, 400 energy here still leaves ~200+ for source links and
-  // storage after extensions and towers are topped.
+  // Fill the controller-side container before storage: upgraders withdraw from it
+  // directly (no runLinks lag), keeping them off sources.
   const ctrlContainers = creep.room.find(FIND_STRUCTURES, {
     filter: (s): s is StructureContainer =>
       s.structureType === STRUCTURE_CONTAINER &&
@@ -93,6 +91,20 @@ const getDeliveryTarget = (creep: Creep) => {
   const ctrlContainer = creep.pos.findClosestByPath(ctrlContainers);
   if (ctrlContainer) {
     return ctrlContainer;
+  }
+
+  // Prioritise storage over source links — harvesters already top up source links
+  // when the source container is buffered; routing hauler surplus there adds little
+  // while starving storage of the energy it needs to back up upgraders.
+  const storage = creep.room.find(FIND_STRUCTURES, {
+    filter: (structure) =>
+      structure.structureType === STRUCTURE_STORAGE &&
+      structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0,
+  });
+
+  const storageTarget = creep.pos.findClosestByPath(storage);
+  if (storageTarget) {
+    return storageTarget;
   }
 
   const controller = creep.room.controller;
@@ -119,17 +131,6 @@ const getDeliveryTarget = (creep: Creep) => {
     if (builderTarget) {
       return builderTarget;
     }
-  }
-
-  const storage = creep.room.find(FIND_STRUCTURES, {
-    filter: (structure) =>
-      structure.structureType === STRUCTURE_STORAGE &&
-      structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0,
-  });
-
-  const storageTarget = creep.pos.findClosestByPath(storage);
-  if (storageTarget) {
-    return storageTarget;
   }
 
   return creep.pos.findClosestByPath(FIND_MY_CREEPS, {
