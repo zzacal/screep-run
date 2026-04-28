@@ -50,12 +50,19 @@ export const harvest = (creep: Creep) => {
             s.store.getFreeCapacity(RESOURCE_ENERGY) > 0,
     })[0] as StructureLink | undefined;
 
-    // Container has a hauler-load buffered and a link is present — route to link
+    // Container has a hauler-load buffered — route surplus to the source link.
+    // If not yet adjacent to the link, reposition rather than filling the container:
+    // the container already has a hauler-load buffered, and link energy propagates
+    // to the controller link (via runLinks) freeing haulers to fill storage.
     const containerBuffered =
         sourceContainer != null &&
         sourceContainer.store.getUsedCapacity(RESOURCE_ENERGY) >= SOURCE_CONTAINER_BUFFER;
-    if (sourceLink && containerBuffered && creep.pos.isNearTo(sourceLink)) {
-        creep.transfer(sourceLink, RESOURCE_ENERGY);
+    if (sourceLink && containerBuffered) {
+        if (creep.pos.isNearTo(sourceLink)) {
+            creep.transfer(sourceLink, RESOURCE_ENERGY);
+        } else {
+            moveToTarget(creep, sourceLink, "#00aaff");
+        }
         return;
     }
 
