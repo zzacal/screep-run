@@ -11,6 +11,7 @@ export const makeAffinity = (overrides: Partial<Affinity>): Affinity => ({
   remoteHarvest: 0,
   remoteHaul: 0,
   repair: 0,
+  mineralHarvest: 0,
   ...overrides,
 });
 

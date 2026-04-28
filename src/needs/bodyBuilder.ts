@@ -11,8 +11,9 @@ export const buildBodyForTask = (task: TaskName, energyCapacity: number): BodyPa
     case "upgrade":       return buildWorkerBody(energyCapacity);
     case "defend":        return buildDefenderBody(energyCapacity);
     case "repair":        return buildWorkerBody(energyCapacity);
-    case "remoteHarvest": return buildRemoteHarvesterBody(energyCapacity);
-    case "remoteHaul":    return buildRemoteHaulerBody(energyCapacity);
+    case "remoteHarvest":   return buildRemoteHarvesterBody(energyCapacity);
+    case "remoteHaul":      return buildRemoteHaulerBody(energyCapacity);
+    case "mineralHarvest":  return buildMineralHarvesterBody(energyCapacity);
     default: {
       const _exhaustive: never = task;
       return [WORK, CARRY, MOVE];
@@ -63,6 +64,12 @@ const buildRemoteHarvesterBody = (cap: number): BodyPartConstant[] => {
   if (cap >= 450) return [WORK, WORK, WORK, CARRY, MOVE, MOVE, MOVE];
   if (cap >= 350) return [WORK, WORK, CARRY, MOVE, MOVE];
   return [WORK, CARRY, MOVE, MOVE];
+};
+
+const buildMineralHarvesterBody = (cap: number): BodyPartConstant[] => {
+  if (cap >= 800) return [WORK, WORK, WORK, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE];
+  if (cap >= 550) return [WORK, WORK, CARRY, CARRY, MOVE, MOVE];
+  return [WORK, CARRY, MOVE];
 };
 
 const buildRemoteHaulerBody = (cap: number): BodyPartConstant[] => {

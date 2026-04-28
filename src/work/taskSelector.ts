@@ -25,12 +25,17 @@ export const selectTask = (creep: Creep, needs: RoomNeeds): TaskName => {
       continue;
     }
 
-    if ((task === "harvest" || task === "build" || task === "upgrade" || task === "remoteHarvest" || task === "repair") && !hasWork) {
+    if ((task === "harvest" || task === "build" || task === "upgrade" || task === "remoteHarvest" || task === "repair" || task === "mineralHarvest") && !hasWork) {
       continue;
     }
 
     if (task === "defend" && !hasAttack) {
       continue;
+    }
+
+    if (task === "mineralHarvest") {
+      const mineral = creep.room.find(FIND_MINERALS)[0];
+      if (!mineral || mineral.mineralAmount === 0) continue;
     }
 
     const score = needs[task] * affinity[task];

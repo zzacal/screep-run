@@ -14,6 +14,7 @@ export interface RoomSignals {
   hasStorage: boolean;
   storageUsedRatio: number;
   containerEnergy: number;
+  hasMineralHarvesting: boolean;
 }
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
@@ -81,6 +82,18 @@ export const computeRoomSignals = (room: Room, isThreatened: boolean, remoteEnab
     0
   );
 
+  const hasMineralHarvesting = (() => {
+    const mineral = room.find(FIND_MINERALS)[0];
+    if (!mineral || mineral.mineralAmount === 0) return false;
+    const hasExtractor = room.find(FIND_MY_STRUCTURES, {
+      filter: (s) => s.structureType === STRUCTURE_EXTRACTOR,
+    }).length > 0;
+    if (!hasExtractor) return false;
+    return room.find(FIND_MY_STRUCTURES, {
+      filter: (s) => s.structureType === STRUCTURE_TERMINAL,
+    }).length > 0;
+  })();
+
   return {
     sourceCount,
     hasConstruction,
@@ -95,11 +108,12 @@ export const computeRoomSignals = (room: Room, isThreatened: boolean, remoteEnab
     hasStorage,
     storageUsedRatio,
     containerEnergy,
+    hasMineralHarvesting,
   };
 };
 
 export const computeRoomNeeds = (signals: RoomSignals): RoomNeeds => {
-  const { extensionFillRatio, extensionCapacity, sourceDropEnergy, hasConstruction, isThreatened, remoteEnabled, repairUrgency, armedTowerCount, hasStorage, storageUsedRatio } = signals;
+  const { extensionFillRatio, extensionCapacity, sourceDropEnergy, hasConstruction, isThreatened, remoteEnabled, repairUrgency, armedTowerCount, hasStorage, storageUsedRatio, hasMineralHarvesting } = signals;
 
   const harvest = clamp01(0.4 + (1 - extensionFillRatio) * 0.3);
 
@@ -130,6 +144,8 @@ export const computeRoomNeeds = (signals: RoomSignals): RoomNeeds => {
   const remoteHarvest = remoteEnabled ? 0.5 : 0.0;
   const remoteHaul = remoteEnabled ? 0.5 : 0.0;
   const repair = repairUrgency > 0 ? clamp01(0.4 + repairUrgency * 0.5) : 0.0;
+  // 0.3 < 1/TARGET_COVERAGE (0.333) so exactly one mineral harvester is maintained.
+  const mineralHarvest = hasMineralHarvesting ? 0.3 : 0.0;
 
-  return makeRoomNeeds({ harvest, haul, build, upgrade, defend, remoteHarvest, remoteHaul, repair });
+  return makeRoomNeeds({ harvest, haul, build, upgrade, defend, remoteHarvest, remoteHaul, repair, mineralHarvest });
 };

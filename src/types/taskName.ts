@@ -6,7 +6,8 @@ export type TaskName =
   | "defend"
   | "remoteHarvest"
   | "remoteHaul"
-  | "repair";
+  | "repair"
+  | "mineralHarvest";
 
 export const ALL_TASKS: readonly TaskName[] = [
   "harvest",
@@ -17,4 +18,5 @@ export const ALL_TASKS: readonly TaskName[] = [
   "remoteHarvest",
   "remoteHaul",
   "repair",
+  "mineralHarvest",
 ] as const;
