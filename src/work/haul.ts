@@ -84,7 +84,7 @@ const getDeliveryTarget = (creep: Creep) => {
   const ctrlContainers = creep.room.find(FIND_STRUCTURES, {
     filter: (s): s is StructureContainer =>
       s.structureType === STRUCTURE_CONTAINER &&
-      s.store.getUsedCapacity(RESOURCE_ENERGY) < 400 &&
+      s.store.getUsedCapacity(RESOURCE_ENERGY) < 800 &&
       s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 &&
       s.pos.findInRange(FIND_SOURCES, 1).length === 0,
   });
