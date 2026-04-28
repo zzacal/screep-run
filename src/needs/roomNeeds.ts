@@ -120,7 +120,12 @@ export const computeRoomNeeds = (signals: RoomSignals): RoomNeeds => {
   const buildOverflowBoost = clamp01(sourceDropEnergy / 400);
   const build = hasConstruction ? clamp01(0.7 + buildOverflowBoost * 0.3) : 0.0;
   const upgradeOverflowBoost = clamp01(sourceDropEnergy / 400);
-  const upgrade = clamp01(0.4 + extensionFillRatio * 0.4 + upgradeOverflowBoost * 0.4);
+  // When storage exists but is nearly empty (<2% = ~20K energy), cap upgrade
+  // pressure so the room spawns fewer upgraders and energy can accumulate.
+  // Existing upgraders are not killed — the cap only slows replacement as they
+  // age out, gradually shifting surplus energy into storage.
+  const upgradeCap = hasStorage && storageUsedRatio < 0.02 ? 0.4 : 1.0;
+  const upgrade = clamp01((0.4 + extensionFillRatio * 0.4 + upgradeOverflowBoost * 0.4) * upgradeCap);
   const defend = isThreatened && armedTowerCount === 0 ? 1.0 : 0.0;
   const remoteHarvest = remoteEnabled ? 0.5 : 0.0;
   const remoteHaul = remoteEnabled ? 0.5 : 0.0;
