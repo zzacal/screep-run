@@ -13,6 +13,7 @@ export interface RoomSignals {
   armedTowerCount: number;
   hasStorage: boolean;
   storageUsedRatio: number;
+  containerEnergy: number;
 }
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
@@ -72,6 +73,14 @@ export const computeRoomSignals = (room: Room, isThreatened: boolean, remoteEnab
       storageStructure.store.getCapacity(RESOURCE_ENERGY)
     : 0;
 
+  const containers = room.find(FIND_STRUCTURES, {
+    filter: (s): s is StructureContainer => s.structureType === STRUCTURE_CONTAINER,
+  }) as StructureContainer[];
+  const containerEnergy = containers.reduce(
+    (sum, c) => sum + c.store.getUsedCapacity(RESOURCE_ENERGY),
+    0
+  );
+
   return {
     sourceCount,
     hasConstruction,
@@ -85,6 +94,7 @@ export const computeRoomSignals = (room: Room, isThreatened: boolean, remoteEnab
     armedTowerCount,
     hasStorage,
     storageUsedRatio,
+    containerEnergy,
   };
 };
 
@@ -93,12 +103,18 @@ export const computeRoomNeeds = (signals: RoomSignals): RoomNeeds => {
 
   const harvest = clamp01(0.4 + (1 - extensionFillRatio) * 0.3);
 
-  const haulFromFill = extensionCapacity > 0 ? clamp01((1.0 - extensionFillRatio) * 1.5) : 0;
+  // Only boost haul need when there is actually energy available to haul.
+  // If containers, drops, and storage are all empty the room has nothing to
+  // move; spawning a hauler first burns the last available energy on a creep
+  // that idles, preventing a harvester from ever starting energy production.
+  const hasHaulableEnergy = signals.containerEnergy > 0 || sourceDropEnergy > 0;
+  const haulFromFill = hasHaulableEnergy && extensionCapacity > 0 ? clamp01((1.0 - extensionFillRatio) * 1.5) : 0;
   const haulFromDrop = clamp01(sourceDropEnergy / 500);
   // When storage exists but is mostly empty, maintain haulers even when extensions are
   // full and no energy is currently dropped — without this floor, haul need collapses to
   // zero and existing haulers are never replaced as they age out, leaving storage empty.
-  const haulFromStorage = hasStorage ? clamp01((1 - storageUsedRatio) * 0.8) : 0;
+  // Gate on haulable energy for the same bootstrap reason as haulFromFill.
+  const haulFromStorage = hasStorage && hasHaulableEnergy ? clamp01((1 - storageUsedRatio) * 0.8) : 0;
   const haul = clamp01(Math.max(haulFromFill, haulFromDrop, haulFromStorage));
 
   const buildOverflowBoost = clamp01(sourceDropEnergy / 400);
