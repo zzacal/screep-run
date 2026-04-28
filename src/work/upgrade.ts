@@ -15,14 +15,14 @@ export const upgrade = (creep: Creep) => {
       moveToTarget(creep, creep.room.controller!, "#ffffff");
     }
   } else {
-    // Always target the controller-side link — same selection as runLinks uses —
-    // so upgraders stay anchored near the controller instead of draining the
-    // source link and making a 25-tile round trip back.
-    const energisedLinks = creep.room.find(FIND_MY_STRUCTURES, {
-      filter: (s): s is StructureLink =>
-        s.structureType === STRUCTURE_LINK && (s as StructureLink).store.energy > 0,
+    // Always target the controller-side link (the one closest to the controller
+    // by position) so the upgrader stays anchored near the controller.  Selecting
+    // by position first and checking energy second prevents the creep from trekking
+    // to a source link 25+ tiles away when the controller link is momentarily dry.
+    const allLinks = creep.room.find(FIND_MY_STRUCTURES, {
+      filter: (s): s is StructureLink => s.structureType === STRUCTURE_LINK,
     }) as StructureLink[];
-    const controllerLink = energisedLinks.reduce<StructureLink | undefined>(
+    const controllerLink = allLinks.reduce<StructureLink | undefined>(
       (best, link) =>
         !best || link.pos.getRangeTo(creep.room.controller!) < best.pos.getRangeTo(creep.room.controller!)
           ? link
@@ -30,7 +30,7 @@ export const upgrade = (creep: Creep) => {
       undefined
     );
 
-    if (controllerLink) {
+    if (controllerLink && controllerLink.store.energy > 0) {
       if (creep.withdraw(controllerLink, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
         moveToTarget(creep, controllerLink, "#ffaa00");
       }
