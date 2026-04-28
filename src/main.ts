@@ -170,6 +170,8 @@ const planTerminal = (room: Room) => planStructureNearSpawn(room, STRUCTURE_TERM
 
 const planLabs = (room: Room) => planStructureNearSpawn(room, STRUCTURE_LAB, 2, 7);
 
+const planFactory = (room: Room) => planStructureNearSpawn(room, STRUCTURE_FACTORY, 2, 7);
+
 const planLinks = (room: Room): void => {
   if (!room.controller) return;
   const allowed = CONTROLLER_STRUCTURES[STRUCTURE_LINK][room.controller.level] as number;
@@ -673,6 +675,7 @@ export const loop = ErrorMapper.wrapLoop(() => {
     planStorage(room);
     planTerminal(room);
     planLabs(room);
+    planFactory(room);
     planLinks(room);
     planExtractor(room);
     planRoadNetwork(room);
