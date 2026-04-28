@@ -73,6 +73,7 @@ const buildMineralHarvesterBody = (cap: number): BodyPartConstant[] => {
 };
 
 const buildRemoteHaulerBody = (cap: number): BodyPartConstant[] => {
+  if (cap >= 2000) return [CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE]; // 16C 16M = 1600 cost, 800 carry
   if (cap >= 1600) return [CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE]; // 12C 12M = 1200 cost, 600 carry
   if (cap >= 1200) return [CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE]; // 8C 8M = 800 cost, 400 carry
   if (cap >= 800) return [CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE]; // 6C 6M = 600 cost, 300 carry
