@@ -79,8 +79,24 @@ const getDeliveryTarget = (creep: Creep) => {
     return towerTarget;
   }
 
-  // Fill the controller-side container before storage: upgraders withdraw from it
-  // directly (no runLinks lag), keeping them off sources.
+  // Fill storage before the controller-side container: storage sits near the
+  // spawn (short haul trips) while the ctrl container is near the controller
+  // (long trips). The controller link already keeps upgraders anchored near
+  // the controller, so the ctrl container is only a fallback when the link
+  // is in cooldown — not worth prioritising over accumulating a storage buffer.
+  const storage = creep.room.find(FIND_STRUCTURES, {
+    filter: (structure) =>
+      structure.structureType === STRUCTURE_STORAGE &&
+      structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0,
+  });
+
+  const storageTarget = creep.pos.findClosestByPath(storage);
+  if (storageTarget) {
+    return storageTarget;
+  }
+
+  // Secondary sink: controller-side container for upgrader fallback when link
+  // is in cooldown.
   const ctrlContainers = creep.room.find(FIND_STRUCTURES, {
     filter: (s): s is StructureContainer =>
       s.structureType === STRUCTURE_CONTAINER &&
@@ -91,20 +107,6 @@ const getDeliveryTarget = (creep: Creep) => {
   const ctrlContainer = creep.pos.findClosestByPath(ctrlContainers);
   if (ctrlContainer) {
     return ctrlContainer;
-  }
-
-  // Prioritise storage over source links — harvesters already top up source links
-  // when the source container is buffered; routing hauler surplus there adds little
-  // while starving storage of the energy it needs to back up upgraders.
-  const storage = creep.room.find(FIND_STRUCTURES, {
-    filter: (structure) =>
-      structure.structureType === STRUCTURE_STORAGE &&
-      structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0,
-  });
-
-  const storageTarget = creep.pos.findClosestByPath(storage);
-  if (storageTarget) {
-    return storageTarget;
   }
 
   const controller = creep.room.controller;
