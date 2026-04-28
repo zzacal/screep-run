@@ -194,7 +194,8 @@ const planLinks = (room: Room): void => {
         const y = source.pos.y + dy;
         if (x < 1 || x > 48 || y < 1 || y > 48) continue;
         if (terrain.get(x, y) === TERRAIN_MASK_WALL) continue;
-        if (room.lookForAt(LOOK_STRUCTURES, x, y).length > 0) continue;
+        const structs = room.lookForAt(LOOK_STRUCTURES, x, y);
+        if (structs.some(s => s.structureType !== STRUCTURE_ROAD)) continue;
         if (room.lookForAt(LOOK_CONSTRUCTION_SITES, x, y).length > 0) continue;
         if (room.createConstructionSite(x, y, STRUCTURE_LINK) === OK) return;
       }
@@ -212,7 +213,8 @@ const planLinks = (room: Room): void => {
         const y = room.controller.pos.y + dy;
         if (x < 1 || x > 48 || y < 1 || y > 48) continue;
         if (terrain.get(x, y) === TERRAIN_MASK_WALL) continue;
-        if (room.lookForAt(LOOK_STRUCTURES, x, y).length > 0) continue;
+        const structs = room.lookForAt(LOOK_STRUCTURES, x, y);
+        if (structs.some(s => s.structureType !== STRUCTURE_ROAD)) continue;
         if (room.lookForAt(LOOK_CONSTRUCTION_SITES, x, y).length > 0) continue;
         if (room.createConstructionSite(x, y, STRUCTURE_LINK) === OK) return;
       }
