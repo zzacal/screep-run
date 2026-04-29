@@ -121,7 +121,10 @@ export const computeRoomNeeds = (signals: RoomSignals): RoomNeeds => {
   // If containers, drops, and storage are all empty the room has nothing to
   // move; spawning a hauler first burns the last available energy on a creep
   // that idles, preventing a harvester from ever starting energy production.
-  const hasHaulableEnergy = signals.containerEnergy > 0 || sourceDropEnergy > 0;
+  // Storage >1% counts as haulable: haulers can pull from storage even when
+  // containers and drops are momentarily empty (common after a drain cycle).
+  const hasHaulableEnergy = signals.containerEnergy > 0 || sourceDropEnergy > 0 ||
+    (hasStorage && storageUsedRatio > 0.01);
   const haulFromFill = hasHaulableEnergy && extensionCapacity > 0 ? clamp01((1.0 - extensionFillRatio) * 1.5) : 0;
   const haulFromDrop = clamp01(sourceDropEnergy / 500);
   // When storage exists but is mostly empty, maintain haulers even when extensions are
