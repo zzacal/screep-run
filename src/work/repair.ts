@@ -1,6 +1,6 @@
 import { findReachableSource, moveToTarget } from "work/utils";
 
-const REPAIR_THRESHOLD = 0.75;
+const REPAIR_THRESHOLD = 0.85;
 
 const getRepairPriority = (structure: AnyStructure): number => {
   if (structure.structureType === STRUCTURE_CONTAINER) return 100;

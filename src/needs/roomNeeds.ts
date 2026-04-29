@@ -55,7 +55,7 @@ export const computeRoomSignals = (room: Room, isThreatened: boolean, remoteEnab
     filter: (s) =>
       s.structureType !== STRUCTURE_WALL &&
       s.structureType !== STRUCTURE_RAMPART &&
-      s.hits < s.hitsMax * 0.75,
+      s.hits < s.hitsMax * 0.85,
   });
   const repairUrgency = clamp01(damagedStructures.length / 5);
 
