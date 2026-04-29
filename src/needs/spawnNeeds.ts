@@ -32,7 +32,7 @@ export const canonicalAffinityFor = (task: TaskName): Affinity => {
     case "defend":        return makeAffinity({ defend: 1.0 });
     case "remoteHarvest": return makeAffinity({ remoteHarvest: 1.0 });
     case "remoteHaul":    return makeAffinity({ remoteHaul: 1.0 });
-    case "repair":          return makeAffinity({ repair: 1.0, build: 0.3, upgrade: 0.1 });
+    case "repair":          return makeAffinity({ repair: 1.0, build: 0.3, haul: 0.2, upgrade: 0.1 });
     case "mineralHarvest":  return makeAffinity({ mineralHarvest: 1.0 });
     default: {
       const _exhaustive: never = task;
