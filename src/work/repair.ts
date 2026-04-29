@@ -1,6 +1,7 @@
 import { findReachableSource, moveToTarget } from "work/utils";
 
 const REPAIR_THRESHOLD = 0.85;
+const RAMPART_MIN_HITS = 10_000;
 
 const getRepairPriority = (structure: AnyStructure): number => {
   if (structure.structureType === STRUCTURE_CONTAINER) return 100;
@@ -21,10 +22,11 @@ const getRepairPriority = (structure: AnyStructure): number => {
 
 const getRepairTarget = (creep: Creep): AnyStructure | null => {
   const targets = creep.room.find(FIND_STRUCTURES, {
-    filter: (s) =>
-      s.structureType !== STRUCTURE_WALL &&
-      s.structureType !== STRUCTURE_RAMPART &&
-      s.hits < s.hitsMax * REPAIR_THRESHOLD,
+    filter: (s) => {
+      if (s.structureType === STRUCTURE_WALL) return false;
+      if (s.structureType === STRUCTURE_RAMPART) return s.hits < RAMPART_MIN_HITS;
+      return s.hits < s.hitsMax * REPAIR_THRESHOLD;
+    },
   });
   if (targets.length === 0) return null;
 

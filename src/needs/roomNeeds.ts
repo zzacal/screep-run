@@ -51,11 +51,13 @@ export const computeRoomSignals = (room: Room, isThreatened: boolean, remoteEnab
     filter: (spawn) => spawn.spawning == null,
   }).length;
 
+  const RAMPART_MIN_HITS = 10_000;
   const damagedStructures = room.find(FIND_STRUCTURES, {
-    filter: (s) =>
-      s.structureType !== STRUCTURE_WALL &&
-      s.structureType !== STRUCTURE_RAMPART &&
-      s.hits < s.hitsMax * 0.85,
+    filter: (s) => {
+      if (s.structureType === STRUCTURE_WALL) return false;
+      if (s.structureType === STRUCTURE_RAMPART) return s.hits < RAMPART_MIN_HITS;
+      return s.hits < s.hitsMax * 0.85;
+    },
   });
   const repairUrgency = clamp01(damagedStructures.length / 5);
 

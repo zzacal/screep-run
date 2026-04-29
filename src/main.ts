@@ -242,6 +242,31 @@ const planExtractor = (room: Room): void => {
   room.createConstructionSite(mineral.pos.x, mineral.pos.y, STRUCTURE_EXTRACTOR);
 };
 
+const RAMPART_PROTECTED_TYPES: StructureConstant[] = [
+  STRUCTURE_SPAWN,
+  STRUCTURE_TOWER,
+  STRUCTURE_STORAGE,
+  STRUCTURE_TERMINAL,
+];
+
+const planRamparts = (room: Room): void => {
+  if (!room.controller || room.controller.level < 2) return;
+  const targets = room.find(FIND_MY_STRUCTURES, {
+    filter: (s) => RAMPART_PROTECTED_TYPES.includes(s.structureType),
+  });
+  for (const target of targets) {
+    const hasRampart = target.pos.lookFor(LOOK_STRUCTURES).some(
+      (s) => s.structureType === STRUCTURE_RAMPART
+    );
+    const hasSite = target.pos.lookFor(LOOK_CONSTRUCTION_SITES).some(
+      (s) => s.structureType === STRUCTURE_RAMPART
+    );
+    if (!hasRampart && !hasSite) {
+      if (room.createConstructionSite(target.pos.x, target.pos.y, STRUCTURE_RAMPART) === OK) return;
+    }
+  }
+};
+
 const runLinks = (room: Room): void => {
   if (!room.controller) return;
   const links = room.find(FIND_MY_STRUCTURES, {
@@ -385,19 +410,27 @@ const runTowerRepair = (room: Room): void => {
       s.structureType !== STRUCTURE_RAMPART &&
       s.hits < s.hitsMax * 0.75,
   });
-  if (damaged.length === 0) return;
-
-  const worst = damaged.reduce((a, b) =>
-    a.hits / a.hitsMax < b.hits / b.hitsMax ? a : b
-  );
-  for (const tower of towers) {
-    tower.repair(worst);
+  if (damaged.length > 0) {
+    const worst = damaged.reduce((a, b) =>
+      a.hits / a.hitsMax < b.hits / b.hitsMax ? a : b
+    );
+    for (const tower of towers) tower.repair(worst);
+    return;
   }
+
+  const weakRamparts = room.find(FIND_MY_STRUCTURES, {
+    filter: (s): s is StructureRampart =>
+      s.structureType === STRUCTURE_RAMPART && s.hits < RAMPART_MIN_HITS,
+  });
+  if (weakRamparts.length === 0) return;
+  const weakest = weakRamparts.reduce((a, b) => a.hits < b.hits ? a : b);
+  for (const tower of towers) tower.repair(weakest);
 };
 
 const SOURCE_DROP_WARNING_THRESHOLD = 350;
 const SOURCE_DROP_WARNING_STREAK = 3;
 const REMOTE_HOSTILE_PAUSE_TICKS = 150;
+const RAMPART_MIN_HITS = 10_000;
 const ROAD_PLANNER_INTERVAL = 25;
 const ROAD_SITE_PLACEMENT_LIMIT = 4;
 const MAX_ACTIVE_SITES_PER_ROOM = 14;
@@ -678,6 +711,7 @@ export const loop = ErrorMapper.wrapLoop(() => {
     planFactory(room);
     planLinks(room);
     planExtractor(room);
+    planRamparts(room);
     planRoadNetwork(room);
     enforceActiveConstructionLimit(room);
     runLinks(room);
