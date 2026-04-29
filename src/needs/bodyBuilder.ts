@@ -44,6 +44,8 @@ const buildHaulerBody = (cap: number): BodyPartConstant[] => {
 };
 
 const buildWorkerBody = (cap: number): BodyPartConstant[] => {
+  // 15W 3C 9M = 2100 cost; full speed on roads (18 each side)
+  if (cap >= 2200) return [WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE];
   // 12W 3C 8M = 1750 cost; full speed on roads (16 MOVE capacity vs 15 non-MOVE fatigue)
   if (cap >= 1800) return [WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE];
   // 7W 2C 5M = 1050 cost; full speed on roads (10 vs 9)
