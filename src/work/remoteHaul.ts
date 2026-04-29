@@ -47,6 +47,19 @@ const getHomeDeliveryTarget = (creep: Creep) => {
     return towerTarget;
   }
 
+  const CTRL_CONTAINER_BUFFER = 500;
+  const ctrlContainerBuffer = creep.pos.findClosestByPath(
+    creep.room.find(FIND_STRUCTURES, {
+      filter: (s): s is StructureContainer =>
+        s.structureType === STRUCTURE_CONTAINER &&
+        s.store.getUsedCapacity(RESOURCE_ENERGY) < CTRL_CONTAINER_BUFFER &&
+        s.pos.findInRange(FIND_SOURCES, 1).length === 0,
+    })
+  );
+  if (ctrlContainerBuffer) {
+    return ctrlContainerBuffer;
+  }
+
   const storage = creep.room.find(FIND_STRUCTURES, {
     filter: (structure) =>
       structure.structureType === STRUCTURE_STORAGE &&
