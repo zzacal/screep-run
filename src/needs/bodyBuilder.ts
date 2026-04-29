@@ -31,6 +31,10 @@ const buildHarvesterBody = (cap: number): BodyPartConstant[] => {
 };
 
 const buildHaulerBody = (cap: number): BodyPartConstant[] => {
+  // 18C 9M = 1350 cost, 900 carry; full speed on roads (18 CARRY × 1 = 18 fatigue, 9 MOVE × 2 = 18)
+  if (cap >= 1400) return [CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE];
+  // 14C 7M = 1050 cost, 700 carry; full speed on roads
+  if (cap >= 1100) return [CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE];
   if (cap >= 750) return [CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE];
   if (cap >= 600) return [CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE];
   if (cap >= 450) return [CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE];
