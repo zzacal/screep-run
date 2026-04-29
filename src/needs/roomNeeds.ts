@@ -51,7 +51,7 @@ export const computeRoomSignals = (room: Room, isThreatened: boolean, remoteEnab
     filter: (spawn) => spawn.spawning == null,
   }).length;
 
-  const RAMPART_MIN_HITS = 100_000;
+  const RAMPART_MIN_HITS = 1_000_000;
   const damagedStructures = room.find(FIND_STRUCTURES, {
     filter: (s) => {
       if (s.structureType === STRUCTURE_WALL) return false;
