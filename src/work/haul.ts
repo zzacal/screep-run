@@ -79,11 +79,25 @@ const getDeliveryTarget = (creep: Creep) => {
     return towerTarget;
   }
 
-  // Fill storage before the controller-side container: storage sits near the
-  // spawn (short haul trips) while the ctrl container is near the controller
-  // (long trips). The controller link already keeps upgraders anchored near
-  // the controller, so the ctrl container is only a fallback when the link
-  // is in cooldown — not worth prioritising over accumulating a storage buffer.
+  // Keep the controller-side container topped up to a buffer before filling
+  // storage. The controller link supplies ~10 energy/tick but upgraders need
+  // 24/tick; when the link is in cooldown the ctrl container is the nearest
+  // fallback (1 tile from the controller). Without this priority haulers always
+  // fill storage first — storage never fills, so ctrl container stays at 0 and
+  // upgraders walk 20 tiles to storage instead of withdrawing locally.
+  const CTRL_CONTAINER_BUFFER = 500;
+  const ctrlContainerBuffer = creep.pos.findClosestByPath(
+    creep.room.find(FIND_STRUCTURES, {
+      filter: (s): s is StructureContainer =>
+        s.structureType === STRUCTURE_CONTAINER &&
+        s.store.getUsedCapacity(RESOURCE_ENERGY) < CTRL_CONTAINER_BUFFER &&
+        s.pos.findInRange(FIND_SOURCES, 1).length === 0,
+    })
+  );
+  if (ctrlContainerBuffer) {
+    return ctrlContainerBuffer;
+  }
+
   const storage = creep.room.find(FIND_STRUCTURES, {
     filter: (structure) =>
       structure.structureType === STRUCTURE_STORAGE &&
@@ -95,8 +109,7 @@ const getDeliveryTarget = (creep: Creep) => {
     return storageTarget;
   }
 
-  // Secondary sink: controller-side container for upgrader fallback when link
-  // is in cooldown.
+  // Secondary sink: fill ctrl container above the buffer up to 800.
   const ctrlContainers = creep.room.find(FIND_STRUCTURES, {
     filter: (s): s is StructureContainer =>
       s.structureType === STRUCTURE_CONTAINER &&
