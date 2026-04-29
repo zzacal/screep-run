@@ -289,12 +289,13 @@ const runLinks = (room: Room): void => {
 };
 
 const planSpawn = (room: Room): void => {
-  if (room.find(FIND_MY_SPAWNS).length > 0) return;
-  const hasSite =
-    room.find(FIND_MY_CONSTRUCTION_SITES, {
-      filter: (s) => s.structureType === STRUCTURE_SPAWN,
-    }).length > 0;
-  if (hasSite) return;
+  if (!room.controller) return;
+  const allowed = CONTROLLER_STRUCTURES[STRUCTURE_SPAWN][room.controller.level] as number;
+  const existing = room.find(FIND_MY_SPAWNS).length;
+  const sites = room.find(FIND_MY_CONSTRUCTION_SITES, {
+    filter: (s) => s.structureType === STRUCTURE_SPAWN,
+  }).length;
+  if (existing + sites >= allowed) return;
 
   const anchor = room.storage ?? room.controller;
   if (!anchor) return;
