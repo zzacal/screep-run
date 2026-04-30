@@ -147,8 +147,10 @@ export const computeRoomNeeds = (signals: RoomSignals): RoomNeeds => {
   const upgradeCap = hasStorage && storageUsedRatio < 0.05 ? 0.4 : 1.0;
   // When storage is above 5% full, push upgrade need above the 0.85 urgency threshold so
   // the bot spawns multiple upgraders rather than waiting indefinitely for the max-cap body.
-  const storageUpgradeBoost = hasStorage ? clamp01((storageUsedRatio - 0.05) / 0.10) : 0;
-  const upgrade = clamp01((0.4 + extensionFillRatio * 0.4 + upgradeOverflowBoost * 0.4 + storageUpgradeBoost * 0.3) * upgradeCap);
+  // Ramp reaches max at 10% (not 15%) and carries more weight (0.4 vs 0.3) so that urgency
+  // triggers at ~8% storage — meaningful when remote haulers are actively growing storage.
+  const storageUpgradeBoost = hasStorage ? clamp01((storageUsedRatio - 0.05) / 0.05) : 0;
+  const upgrade = clamp01((0.4 + extensionFillRatio * 0.4 + upgradeOverflowBoost * 0.4 + storageUpgradeBoost * 0.4) * upgradeCap);
   const defend = isThreatened && armedTowerCount === 0 ? 1.0 : 0.0;
   const remoteHarvest = remoteEnabled ? 0.5 : 0.0;
   const remoteHaul = remoteEnabled ? 0.5 : 0.0;
