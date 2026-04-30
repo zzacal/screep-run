@@ -280,11 +280,14 @@ const runLinks = (room: Room): void => {
       : closest
   );
 
-  for (const link of links) {
-    if (link.id === controllerLink.id) continue;
-    if (link.cooldown === 0 && link.store.energy > 0) {
-      link.transferEnergy(controllerLink);
-    }
+  let available = controllerLink.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0;
+  const readyLinks = links
+    .filter(l => l.id !== controllerLink.id && l.cooldown === 0 && l.store.energy > 0)
+    .sort((a, b) => b.store.energy - a.store.energy);
+  for (const link of readyLinks) {
+    if (link.store.energy > available) continue;
+    link.transferEnergy(controllerLink);
+    available -= link.store.energy;
   }
 };
 
