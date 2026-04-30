@@ -79,12 +79,8 @@ const getDeliveryTarget = (creep: Creep) => {
     return towerTarget;
   }
 
-  // Keep the controller-side container topped up to a buffer before filling
-  // storage. The controller link supplies ~10 energy/tick but upgraders need
-  // 24/tick; when the link is in cooldown the ctrl container is the nearest
-  // fallback (1 tile from the controller). Without this priority haulers always
-  // fill storage first — storage never fills, so ctrl container stays at 0 and
-  // upgraders walk 20 tiles to storage instead of withdrawing locally.
+  // Keep the controller-side container topped up to a buffer so upgraders have
+  // a fallback when the controller link is on cooldown.
   const CTRL_CONTAINER_BUFFER = 500;
   const ctrlContainerBuffer = creep.pos.findClosestByPath(
     creep.room.find(FIND_STRUCTURES, {
@@ -96,6 +92,23 @@ const getDeliveryTarget = (creep: Creep) => {
   );
   if (ctrlContainerBuffer) {
     return ctrlContainerBuffer;
+  }
+
+  // Fill source links before storage so runLinks can forward energy to the
+  // controller link each tick, keeping upgraders anchored near the controller
+  // rather than walking 20+ tiles to storage.
+  const controller = creep.room.controller;
+  if (controller) {
+    const sourceLinks = creep.room.find(FIND_MY_STRUCTURES, {
+      filter: (structure): structure is StructureLink =>
+        structure.structureType === STRUCTURE_LINK &&
+        structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0 &&
+        structure.pos.getRangeTo(controller) > 4,
+    });
+    const linkTarget = creep.pos.findClosestByPath(sourceLinks);
+    if (linkTarget) {
+      return linkTarget;
+    }
   }
 
   const storage = creep.room.find(FIND_STRUCTURES, {
@@ -120,20 +133,6 @@ const getDeliveryTarget = (creep: Creep) => {
   const ctrlContainer = creep.pos.findClosestByPath(ctrlContainers);
   if (ctrlContainer) {
     return ctrlContainer;
-  }
-
-  const controller = creep.room.controller;
-  if (controller) {
-    const sourceLinks = creep.room.find(FIND_MY_STRUCTURES, {
-      filter: (structure): structure is StructureLink =>
-        structure.structureType === STRUCTURE_LINK &&
-        structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0 &&
-        structure.pos.getRangeTo(controller) > 4,
-    });
-    const linkTarget = creep.pos.findClosestByPath(sourceLinks);
-    if (linkTarget) {
-      return linkTarget;
-    }
   }
 
   if (creep.room.find(FIND_CONSTRUCTION_SITES).length > 0) {
