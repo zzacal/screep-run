@@ -285,9 +285,10 @@ const runLinks = (room: Room): void => {
     .filter(l => l.id !== controllerLink.id && l.cooldown === 0 && l.store.energy > 0)
     .sort((a, b) => b.store.energy - a.store.energy);
   for (const link of readyLinks) {
-    if (link.store.energy > available) continue;
+    if (available <= 0) break;
+    const transferred = Math.min(link.store.energy, available);
     link.transferEnergy(controllerLink);
-    available -= link.store.energy;
+    available -= transferred;
   }
 };
 
