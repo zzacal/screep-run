@@ -108,7 +108,7 @@ const planExtensions = (room: Room) => {
   if (!spawn) return;
 
   const terrain = room.getTerrain();
-  for (let radius = 2; radius <= 6; radius++) {
+  for (let radius = 2; radius <= 9; radius++) {
     for (let dx = -radius; dx <= radius; dx++) {
       for (let dy = -radius; dy <= radius; dy++) {
         if (Math.abs(dx) !== radius && Math.abs(dy) !== radius) continue;
