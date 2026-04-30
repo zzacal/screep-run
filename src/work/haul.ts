@@ -60,10 +60,15 @@ const getPickupTarget = (creep: Creep) => {
 const getDeliveryTarget = (creep: Creep) => {
   // When source links are critically low (<400) the controller-link relay stalls and
   // upgraders make 20+ tile trips to storage instead of staying near the controller.
-  // Gate on energyAvailable ≥ 400 so we don't divert haulers away from the spawn
-  // during early bootstrap when extensions are truly empty.
+  // Gate on fill ≥ 70%: below that threshold extensions take priority so the room
+  // can afford the next spawn (e.g. 2nd remote hauler at 1600 cost needs ~70% fill
+  // of a 2300-capacity room). Upgraders fall back to the controller-side container
+  // (1 tile away) while extensions are filling, so upgrade throughput is not hurt.
   const controller = creep.room.controller;
-  if (creep.room.energyAvailable >= 400 && controller) {
+  const fillRatio = creep.room.energyCapacityAvailable > 0
+    ? creep.room.energyAvailable / creep.room.energyCapacityAvailable
+    : 1;
+  if (fillRatio >= 0.70 && controller) {
     const criticalSourceLinks = creep.room.find(FIND_MY_STRUCTURES, {
       filter: (s): s is StructureLink =>
         s.structureType === STRUCTURE_LINK &&
