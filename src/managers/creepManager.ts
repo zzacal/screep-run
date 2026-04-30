@@ -109,10 +109,13 @@ export class CreepManager {
     for (const { profile, dominantTask } of ranked) {
       let body = buildBodyForTask(dominantTask, room.energyCapacityAvailable);
       if (bodyCost(body) > room.energyAvailable) {
-        // Allow downgrade when the task is critically urgent (need ≥ 0.85), e.g.
-        // a second hauler needed to drain chronic source overflow.  Otherwise,
-        // wait for the capacity-sized body to avoid spawning a perpetually weak creep.
-        const isUrgent = needs[dominantTask] >= 0.85;
+        // Allow downgrade only when both need is high AND coverage is genuinely thin
+        // (< 2.0 effective creeps). Without the coverage gate, a high haul need
+        // (extensions temporarily empty post-spawn) fires urgent=true even with
+        // 2+ haulers running, locking in a small body that can't refill extensions
+        // fast enough — causing the next spawn to also be small. With coverage ≥ 2.0
+        // the bot waits ~20 ticks for extensions to refill, then spawns the full body.
+        const isUrgent = needs[dominantTask] >= 0.85 && coverage[dominantTask] < 2.0;
         if (coverage[dominantTask] > 0 && !isUrgent) {
           continue;
         }
