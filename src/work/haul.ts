@@ -58,6 +58,25 @@ const getPickupTarget = (creep: Creep) => {
 };
 
 const getDeliveryTarget = (creep: Creep) => {
+  // When source links are critically low (<400) the controller-link relay stalls and
+  // upgraders make 20+ tile trips to storage instead of staying near the controller.
+  // Gate on energyAvailable ≥ 400 so we don't divert haulers away from the spawn
+  // during early bootstrap when extensions are truly empty.
+  const controller = creep.room.controller;
+  if (creep.room.energyAvailable >= 400 && controller) {
+    const criticalSourceLinks = creep.room.find(FIND_MY_STRUCTURES, {
+      filter: (s): s is StructureLink =>
+        s.structureType === STRUCTURE_LINK &&
+        s.store.getUsedCapacity(RESOURCE_ENERGY) < 400 &&
+        s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 &&
+        s.pos.getRangeTo(controller) > 4,
+    });
+    const criticalLink = creep.pos.findClosestByPath(criticalSourceLinks);
+    if (criticalLink) {
+      return criticalLink;
+    }
+  }
+
   const primary = creep.room.find(FIND_STRUCTURES, {
     filter: (structure) =>
       (structure.structureType === STRUCTURE_SPAWN ||
@@ -95,9 +114,8 @@ const getDeliveryTarget = (creep: Creep) => {
   }
 
   // Fill source links before storage so runLinks can forward energy to the
-  // controller link each tick, keeping upgraders anchored near the controller
-  // rather than walking 20+ tiles to storage.
-  const controller = creep.room.controller;
+  // controller link each tick. Links below the 400-energy critical threshold
+  // were already handled above; this tops them up to full after extensions are done.
   if (controller) {
     const sourceLinks = creep.room.find(FIND_MY_STRUCTURES, {
       filter: (structure): structure is StructureLink =>
